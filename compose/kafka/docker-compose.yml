@@ -12,7 +12,7 @@ services:
       ZOO_SERVERS: server.1=0.0.0.0:2888:3888;2181 server.2=zoo2:2888:3888;2181 server.3=zoo3:2888:3888;2181
       ZOO_LOG4J_PROP: INFO,ROLLINGFILE
     volumes: 
-      - ./logs/log1:/logs
+      - /tmp/docker/zookeeper/log1:/logs
 
   zoo2:
     image: zookeeper
@@ -25,7 +25,7 @@ services:
       ZOO_SERVERS: server.1=zoo1:2888:3888;2181 server.2=0.0.0.0:2888:3888;2181 server.3=zoo3:2888:3888;2181
       ZOO_LOG4J_PROP: INFO,ROLLINGFILE
     volumes: 
-      - ./logs/log2:/logs
+      - /tmp/docker/zookeeper/log2:/logs
 
   zoo3:
     image: zookeeper
@@ -38,7 +38,7 @@ services:
       ZOO_SERVERS: server.1=zoo1:2888:3888;2181 server.2=zoo2:2888:3888;2181 server.3=0.0.0.0:2888:3888;2181
       ZOO_LOG4J_PROP: INFO,ROLLINGFILE
     volumes: 
-      - ./logs/log3:/logs
+      - /tmp/docker/zookeeper/log3:/logs
   kfk1:
     build: ./kafka_img
     environment: 
