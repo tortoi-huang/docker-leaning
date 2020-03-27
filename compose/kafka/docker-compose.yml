@@ -29,7 +29,7 @@ services:
     volumes: 
       - /tmp/docker/zookeeper/node2/logs:/logs
       - /tmp/docker/zookeeper/node2/data:/data
-      - /tmp/docker/zookeeper/node3/datalog:/datalog
+      - /tmp/docker/zookeeper/node2/datalog:/datalog
 
   zoo3:
     image: zookeeper
