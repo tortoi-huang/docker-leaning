@@ -12,7 +12,9 @@ services:
       ZOO_SERVERS: server.1=0.0.0.0:2888:3888;2181 server.2=zoo2:2888:3888;2181 server.3=zoo3:2888:3888;2181
       ZOO_LOG4J_PROP: INFO,ROLLINGFILE
     volumes: 
-      - /tmp/docker/zookeeper/log1:/logs
+      - /tmp/docker/zookeeper/node1/logs:/logs
+      - /tmp/docker/zookeeper/node1/data:/data
+      - /tmp/docker/zookeeper/node1/datalog:/datalog
 
   zoo2:
     image: zookeeper
@@ -25,7 +27,9 @@ services:
       ZOO_SERVERS: server.1=zoo1:2888:3888;2181 server.2=0.0.0.0:2888:3888;2181 server.3=zoo3:2888:3888;2181
       ZOO_LOG4J_PROP: INFO,ROLLINGFILE
     volumes: 
-      - /tmp/docker/zookeeper/log2:/logs
+      - /tmp/docker/zookeeper/node2/logs:/logs
+      - /tmp/docker/zookeeper/node2/data:/data
+      - /tmp/docker/zookeeper/node3/datalog:/datalog
 
   zoo3:
     image: zookeeper
@@ -38,7 +42,9 @@ services:
       ZOO_SERVERS: server.1=zoo1:2888:3888;2181 server.2=zoo2:2888:3888;2181 server.3=0.0.0.0:2888:3888;2181
       ZOO_LOG4J_PROP: INFO,ROLLINGFILE
     volumes: 
-      - /tmp/docker/zookeeper/log3:/logs
+      - /tmp/docker/zookeeper/node3/logs:/logs
+      - /tmp/docker/zookeeper/node3/data:/data
+      - /tmp/docker/zookeeper/node3/datalog:/datalog
   kfk1:
     build: ./kafka_img
     environment: 
@@ -50,7 +56,7 @@ services:
       - zoo3
     image: kafkademo:latest
     volumes: 
-      - /tmp/docker/kafkademo/logs/1:/tmp/kafka-logs
+      - /tmp/docker/kafkacluster/node1/kafka-logs:/tmp/kafka-logs
   kfk2:
     #build: ./kafka_img
     environment: 
@@ -63,7 +69,7 @@ services:
       - kfk1
     image: kafkademo:latest
     volumes: 
-      - /tmp/docker/kafkademo/logs/2:/tmp/kafka-logs
+      - /tmp/docker/kafkacluster/node2/kafka-logs:/tmp/kafka-logs
   kfk3:
     #build: ./kafka_img
     environment: 
@@ -76,4 +82,4 @@ services:
       - kfk1
     image: kafkademo:latest
     volumes: 
-      - /tmp/docker/kafkademo/logs/3:/tmp/kafka-logs
+      - /tmp/docker/kafkacluster/node3/kafka-logs:/tmp/kafka-logs
