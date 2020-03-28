@@ -1,11 +1,11 @@
 #!/bin/sh
 
-cp -f ${KAFKA_HOME}/config/server.properties ${KAFKA_HOME}/config/server_docker.properties 
 if [ -z "${KAFKA_HOME}" ];
 then
     echo "KAFKA_HOME not set"
     exit 1
 fi 
+cp -f ${KAFKA_HOME}/config/server.properties ${KAFKA_HOME}/config/server_docker.properties 
 echo "KAFKA_HOME: ${KAFKA_HOME}"
 if [ ${BROKER_ID} ];
 then
