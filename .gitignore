@@ -31,7 +31,7 @@ target/
 .vscode/
 
 ### project
-*.gradle
+*.gradle/
 !/*/*/out
 /*/out
 !/*/*/bin
