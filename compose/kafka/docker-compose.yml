@@ -1,7 +1,7 @@
 version: "3.1" 
 
 services:
-  zoo1:
+  rb1:
     image: zookeeper
     restart: always
     hostname: zoo1
@@ -45,7 +45,7 @@ services:
       - /tmp/docker/zookeeper/node3/logs:/logs
       - /tmp/docker/zookeeper/node3/data:/data
       - /tmp/docker/zookeeper/node3/datalog:/datalog
-  kfk1:
+  kfk1: &kfk-server
     build: ./kafka_img
     environment: 
       BROKER_ID: 1
@@ -58,28 +58,14 @@ services:
     volumes: 
       - /tmp/docker/kafkacluster/node1/kafka-logs:/tmp/kafka-logs
   kfk2:
-    #build: ./kafka_img
+    <<: *kfk-server
     environment: 
       BROKER_ID: 2
-      ZK: zoo1:2181,zoo2:2181,zoo3:2181
-    depends_on: 
-      - zoo1
-      - zoo2
-      - zoo3
-      - kfk1
-    image: kafkademo:latest
     volumes: 
       - /tmp/docker/kafkacluster/node2/kafka-logs:/tmp/kafka-logs
   kfk3:
-    #build: ./kafka_img
+    <<: *kfk-server
     environment: 
       BROKER_ID: 3
-      ZK: zoo1:2181,zoo2:2181,zoo3:2181
-    depends_on: 
-      - zoo1
-      - zoo2
-      - zoo3
-      - kfk1
-    image: kafkademo:latest
     volumes: 
       - /tmp/docker/kafkacluster/node3/kafka-logs:/tmp/kafka-logs
