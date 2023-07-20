@@ -37,3 +37,7 @@ target/
 !/*/*/bin
 **/bin
 ~
+
+compose/mysqlGR/data1/**
+compose/mysqlGR/data2/**
+compose/mysqlGR/data3/**
