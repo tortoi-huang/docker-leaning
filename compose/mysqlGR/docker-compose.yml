@@ -11,26 +11,12 @@ services:
     environment:
       - MYSQL_ROOT_PASSWORD=Mypass@112233
       - server_id=1
-      # 下面环境变量无效，要使用my.cnf或者command参数
-      # - loose_group_replication_local_address=mysql1:33061
     volumes: 
       # 这里挂载绑定无法设定权限，mysql会忽略有写权限的配置文件
       - ./conf/my.cnf:/etc/my.cnf
       - ./data1:/var/lib/mysql
-    # 指定启动命令，但是这里必须以可写方式挂载才能执行，支付方式挂载后再执行就报错了
-    command: --loose-group-replication-local-address="mysql1:33061"
-    # command: >
-    #   bash -c "
-    #   chmod 644 /etc/my.cnf
-    #   && /entrypoint.sh mysqld
-    #   "
-    #configs: 
-    #  - source: my_config
-    #    target: /etc/mysql/conf.d/my.cnf
-    #    # 修改为只读权限，否则mysql会忽略, windows上此配置无效，只能用自定义镜像
-    #    uid: '999'
-    #    gid: '999'
-    #    mode: 0440
+      # FIXME sql 好像执行出错，手工执行 init_cluster.sh替代
+      # - ./conf/init_master.sql:/docker-entrypoint-initdb.d/init.sql
     networks: 
       - mysql-cluster
 
@@ -42,12 +28,13 @@ services:
     environment:
       - MYSQL_ROOT_PASSWORD=Mypass@112233
       - server_id=2
-      # 下面环境变量无效，要使用my.cnf或者command参数
-      # - loose_group_replication_local_address=mysql2:33061
     volumes: 
       - ./conf/my.cnf:/etc/my.cnf
       - ./data2:/var/lib/mysql
-    command: --loose-group-replication-local-address="mysql2:33061" 
+      # FIXME sql 好像执行出错，手工执行 init_cluster.sh替代
+      # - ./conf/init_slave1.sql:/docker-entrypoint-initdb.d/init.sql
+    depends_on: 
+      - mysql1
 
   mysql3:
     <<: *template
@@ -56,15 +43,14 @@ services:
     environment:
       - MYSQL_ROOT_PASSWORD=Mypass@112233
       - server_id=3
-      # 下面环境变量无效，要使用my.cnf或者command参数
-      # - loose_group_replication_local_address=mysql3:33061
     volumes: 
       - ./conf/my.cnf:/etc/my.cnf
       - ./data3:/var/lib/mysql
-    command: --loose-group-replication-local-address="mysql3:33061"
-#configs:
-#  my_config:
-#    file: ./conf/my.cnf
+      # FIXME sql 好像执行出错，手工执行 init_cluster.sh替代
+      # - ./conf/init_slave2.sql:/docker-entrypoint-initdb.d/init.sql
+    depends_on: 
+      - mysql1
+
 networks:
   mysql-cluster: 
     name: mysqlgr_mysql-cluster
@@ -72,4 +58,3 @@ networks:
       driver: default
       config: 
         - subnet: 192.168.96.0/20
-  #  driver: overlay

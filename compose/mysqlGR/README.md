@@ -10,14 +10,17 @@ mysql blog: https://dev.mysql.com/blog-archive/setting-up-mysql-group-replicatio
 4. 运行init_cluster.sh初始化集群
 
 问题:
-1、 挂载的my.cnf总是可写，docker官方的mysql镜像忽略，解决办法1，通过可写方式挂载，然后修改command启动命令，先授权再启动mysql，解决办法2更换镜像为mysql官方镜像
+1、 挂载的my.cnf总是可写，docker官方的mysql镜像忽略，解决办法1，通过可写方式挂载，然后修改command启动命令，先授权再启动mysql，解决办法2, 更换镜像为mysql官方镜像
 2、 启动时提示错误Ignoring --plugin-load[_add] list as the server is running with --initialize(-insecure)
-解决办法，在plugin相关的参数前都加上前缀 loose_
+解决办法，在plugin相关的参数前都加上前缀 loose_, 
+后续： 此问题仅为通过my.cnf配置插件存在，通过更改为通过sql动态安装和配置group_replication插件将不复存在。
 3、 执行 START GROUP_REPLICATION; 提示错误：
 ERROR 3096 (HY000): The START GROUP_REPLICATION command failed as there was an error when initializing the group communication layer.
 解决办法：之前是用环境变量配置 loose-group-replication-local-address参数无效，更为为my.cnf文件配置 command: --loose-group-replication-local-address="127.0.0.1:33061"，然后成功启动master。
 但是当启动slave的时候又提示: [GCS] Error on opening a connection to 33061 on local port: 33061.
 再次更改为 在docker启动命令传递该参数 command: --loose-group-replication-local-address="mysql1:33061"， 成功启动slave。
+
+后续： 已更改为sql动态安装和配置group_replication插件。
 
 至此，通过一下sql检查所有节点成功启动连接
 ```sql
@@ -34,4 +37,5 @@ SELECT * FROM performance_schema.replication_group_members;
 SELECT * FROM performance_schema.replication_group_members;
 ```sql
 ， 原因是my.cnf配置了 group_replication_start_on_boot=off ,第一次初始化时需要为off,确保在配置完成之前不出错，之后要该为on，重启时才会自动启动复制
-这个问题代解决
+解决: 
+更改为sql动态安装和配置group_replication插件, group_replication_start_on_boot不存在my.cnf写死的问题。
