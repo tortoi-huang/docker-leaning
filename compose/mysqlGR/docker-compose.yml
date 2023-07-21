@@ -3,23 +3,27 @@ version: "3.8"
 services:
   # 这里配子一个容器服务并声明为模板 template
   mysql1: &template
-    image: mysql:8.0.33
+    #image: mysql:8.0.33
+    image: mysql/mysql-server:8.0
     restart: always
     hostname: mysql1
+    container_name: mysqlgr-mysql1-1
     environment:
       - MYSQL_ROOT_PASSWORD=Mypass@112233
       - server_id=1
-      - group_replication_local_address=mysql1:33061
+      # 下面环境变量无效，要使用my.cnf或者command参数
+      # - loose_group_replication_local_address=mysql1:33061
     volumes: 
       # 这里挂载绑定无法设定权限，mysql会忽略有写权限的配置文件
-      - ./conf/my.cnf:/etc/mysql/conf.d/my.cnf
+      - ./conf/my.cnf:/etc/my.cnf
       - ./data1:/var/lib/mysql
     # 指定启动命令，但是这里必须以可写方式挂载才能执行，支付方式挂载后再执行就报错了
-    command: >
-      bash -c "
-      chmod 644 /etc/mysql/conf.d/*.cnf
-      && /entrypoint.sh mysqld
-      "
+    command: --loose-group-replication-local-address="mysql1:33061"
+    # command: >
+    #   bash -c "
+    #   chmod 644 /etc/my.cnf
+    #   && /entrypoint.sh mysqld
+    #   "
     #configs: 
     #  - source: my_config
     #    target: /etc/mysql/conf.d/my.cnf
@@ -30,31 +34,42 @@ services:
     networks: 
       - mysql-cluster
 
-  # mysql2:
-  #   # 使用前面配置的模板，并覆盖专属的参数
-  #   <<: *template
-  #   hostname: mysql2
-  #   environment:
-  #     - MYSQL_ROOT_PASSWORD=Mypass@112233
-  #     - server_id=2
-  #     - group_replication_local_address=mysql2:33061
-  #   volumes: 
-  #     - ./conf/my.cnf:/etc/mysql/conf.d/my.cnf
-  #     - ./data2:/var/lib/mysql
+  mysql2:
+    # 使用前面配置的模板，并覆盖专属的参数
+    <<: *template
+    hostname: mysql2
+    container_name: mysqlgr-mysql2-1
+    environment:
+      - MYSQL_ROOT_PASSWORD=Mypass@112233
+      - server_id=2
+      # 下面环境变量无效，要使用my.cnf或者command参数
+      # - loose_group_replication_local_address=mysql2:33061
+    volumes: 
+      - ./conf/my.cnf:/etc/my.cnf
+      - ./data2:/var/lib/mysql
+    command: --loose-group-replication-local-address="mysql2:33061" 
 
-  # mysql3:
-  #   <<: *template
-  #   hostname: mysql3
-  #   environment:
-  #     - MYSQL_ROOT_PASSWORD=Mypass@112233
-  #     - server_id=3
-  #     - group_replication_local_address=mysql3:33061
-  #   volumes: 
-  #     - ./conf/my.cnf:/etc/mysql/conf.d/my.cnf
-  #     - ./data3:/var/lib/mysql
+  mysql3:
+    <<: *template
+    hostname: mysql3
+    container_name: mysqlgr-mysql3-1
+    environment:
+      - MYSQL_ROOT_PASSWORD=Mypass@112233
+      - server_id=3
+      # 下面环境变量无效，要使用my.cnf或者command参数
+      # - loose_group_replication_local_address=mysql3:33061
+    volumes: 
+      - ./conf/my.cnf:/etc/my.cnf
+      - ./data3:/var/lib/mysql
+    command: --loose-group-replication-local-address="mysql3:33061"
 #configs:
 #  my_config:
 #    file: ./conf/my.cnf
 networks:
   mysql-cluster: 
+    name: mysqlgr_mysql-cluster
+    ipam:
+      driver: default
+      config: 
+        - subnet: 192.168.96.0/20
   #  driver: overlay
