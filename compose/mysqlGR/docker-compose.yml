@@ -16,7 +16,7 @@ services:
       - ./conf/my.cnf:/etc/my.cnf
       - ./data1:/var/lib/mysql
       # FIXME sql 好像执行出错，手工执行 init_cluster.sh替代
-      # - ./conf/init_master.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./conf/init_master.sql:/docker-entrypoint-initdb.d/init.sql
     networks: 
       - mysql-cluster
 
@@ -32,7 +32,7 @@ services:
       - ./conf/my.cnf:/etc/my.cnf
       - ./data2:/var/lib/mysql
       # FIXME sql 好像执行出错，手工执行 init_cluster.sh替代
-      # - ./conf/init_slave1.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./conf/init_slave1.sql:/docker-entrypoint-initdb.d/init.sql
     depends_on: 
       - mysql1
 
@@ -47,7 +47,7 @@ services:
       - ./conf/my.cnf:/etc/my.cnf
       - ./data3:/var/lib/mysql
       # FIXME sql 好像执行出错，手工执行 init_cluster.sh替代
-      # - ./conf/init_slave2.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./conf/init_slave2.sql:/docker-entrypoint-initdb.d/init.sql
     depends_on: 
       - mysql1
 
