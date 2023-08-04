@@ -4,7 +4,7 @@ mysql官方文档: https://dev.mysql.com/doc/refman/8.0/en/group-replication-con
 mysql blog: https://dev.mysql.com/blog-archive/setting-up-mysql-group-replication-with-mysql-docker-images/
 
 ## 运行需求
-1. 运行本实例前需要运行clean_data.bat在当前目录创建三个空目录: data1, data2, data3. 分别存放三个节点数据，如果已经存在则会删除数据重新创建.
+1. 运行本实例前需要现在当前目录创建三个空目录: data1, data2, data3. 分别存放三个节点数据，（因为git不能上传空目录，所以不能实现创建好）
 2. 安装docker和docker-compose
 3. 运行docker compose up 启动三个mysql实例
 4. 运行init_cluster.sh初始化集群

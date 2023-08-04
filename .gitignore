@@ -41,3 +41,7 @@ target/
 compose/mysqlGR/data1/**
 compose/mysqlGR/data2/**
 compose/mysqlGR/data3/**
+
+compose/mysqlGR2/data1/**
+compose/mysqlGR2/data2/**
+compose/mysqlGR2/data3/**

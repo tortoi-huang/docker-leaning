@@ -1,0 +1,36 @@
+[mysqld]
+disabled_storage_engines="MyISAM,BLACKHOLE,FEDERATED,ARCHIVE,MEMORY"
+# mysql8 的默认是是 caching_sha2_password，要修改
+default_authentication_plugin=sha256_password
+
+gtid_mode=ON
+enforce_gtid_consistency=ON
+
+binlog_checksum=NONE
+
+log_bin=binlog
+log_slave_updates=ON
+binlog_format=ROW
+master_info_repository=TABLE
+relay_log_info_repository=TABLE
+transaction_write_set_extraction=XXHASH64
+
+# 通过初始化sql 动态安装配置，my.cnf配置解决不了 loose_group_replication_start_on_boot参数写死的问题
+loose_plugin_load_add='group_replication.so'
+# 集群名称，集群上的所以节点这个配置都应该相同
+loose_group_replication_group_name="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+# 不能写死在这里，第一次初始化时需要为off，之后要该为on
+loose_group_replication_start_on_boot=on
+# 不能使用127.0.0.1，应该使用主机名称，每个节点不同
+loose_group_replication_local_address="mysql1:33061"
+# 访问限制: 8.0.22之前的配置
+loose_group_replication_ip_whitelist="192.168.96.0/20"
+# 访问限制: 8.0.22及之后的配置
+loose_group_replication_ip_allowlist="192.168.96.0/20"
+# 集群节点发现
+loose_group_replication_group_seeds= "mysql1:33061,mysql2:33061,mysql3:33061"
+# loose_group_replication_bootstrap_group=off
+# 单主还是多主模式
+loose_group_replication_single_primary_mode=off
+loose_group_replication_enforce_update_everywhere_checks=ON
+bind-address = "0.0.0.0"

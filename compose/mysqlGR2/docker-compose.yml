@@ -1,0 +1,60 @@
+version: "3.8" 
+
+services:
+  # 这里配子一个容器服务并声明为模板 template
+  mysql1: &template
+    #image: mysql:8.0.33
+    image: mysql/mysql-server:8.0
+    restart: always
+    hostname: mysql1
+    container_name: mysqlgr-mysql1-1
+    environment:
+      - MYSQL_ROOT_PASSWORD=Mypass@112233
+      - server_id=1
+    volumes: 
+      # 这里挂载绑定无法设定权限，mysql会忽略有写权限的配置文件
+      # - ./conf/my-common.cnf:/etc/my.cnf
+      - ./conf/my-mysql1.cnf:/etc/my.cnf
+      - ./data1:/var/lib/mysql
+      - ./conf/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks: 
+      - mysql-cluster
+
+  mysql2:
+    # 使用前面配置的模板，并覆盖专属的参数
+    <<: *template
+    hostname: mysql2
+    container_name: mysqlgr-mysql2-1
+    environment:
+      - MYSQL_ROOT_PASSWORD=Mypass@112233
+      - server_id=2
+    volumes: 
+      # - ./conf/my-common.cnf:/etc/my.cnf
+      - ./conf/my-mysql2.cnf:/etc/my.cnf
+      - ./data2:/var/lib/mysql
+      - ./conf/init.sql:/docker-entrypoint-initdb.d/init.sql
+    depends_on: 
+      - mysql1
+
+  mysql3:
+    <<: *template
+    hostname: mysql3
+    container_name: mysqlgr-mysql3-1
+    environment:
+      - MYSQL_ROOT_PASSWORD=Mypass@112233
+      - server_id=3
+    volumes: 
+      # - ./conf/my-common.cnf:/etc/my.cnf
+      - ./conf/my-mysql3.cnf:/etc/my.cnf
+      - ./data3:/var/lib/mysql
+      - ./conf/init.sql:/docker-entrypoint-initdb.d/init.sql
+    depends_on: 
+      - mysql1
+
+networks:
+  mysql-cluster: 
+    name: mysqlgr_mysql-cluster
+    ipam:
+      driver: default
+      config: 
+        - subnet: 192.168.96.0/20
