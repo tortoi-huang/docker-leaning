@@ -75,6 +75,15 @@ docker compose restart
 var cluster = dba.rebootClusterFromCompleteOutage("devCluster")
 ```
 
+5. 单主多主模式切换
+```shell
+#mysqlsh
+# 切换到多主模式
+cluster.switchToMultiPrimaryMode()
+# 切换到单主模式
+cluster.switchToSinglePrimaryMode()
+```
+
 ## 问题:
 1. 按配置升级镜像版本8.0.12到8.0.32启动出错，通过添加启动命令行参数解决: --binlog_transaction_dependency_tracking=WRITESET
 1. 镜像版本8.0.12节点重启后不会自动添加到集群，升级到8.0.32解决
