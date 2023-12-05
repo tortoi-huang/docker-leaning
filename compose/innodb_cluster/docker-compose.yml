@@ -1,0 +1,62 @@
+version: '3'
+services:
+  mysql-server-1:
+    image: mysql/mysql-server:8.0.32
+    # ports:
+    #   - "3301:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: "mysql"
+      MYSQL_ROOT_HOST: "%"
+    # 参考: https://github.com/neumayer/mysql-docker-compose-examples/tree/master, 
+    # 升级到8.0.32版本添加了参数: binlog_transaction_dependency_tracking=WRITESET, 
+    # 自定义修改添加参数 loose_group_replication_local_address=mysql-server-1,loose_group_replication_group_seeds= mysql-server-1:33061,mysql-server-2:33061,mysql-server-3:33061
+    # command: ["mysqld","--server_id=1","loose_group_replication_local_address=mysql-server-1","loose_group_replication_group_seeds=mysql-server-1:33061,mysql-server-2:33061,mysql-server-3:33061","--binlog_transaction_dependency_tracking=WRITESET","--binlog_checksum=NONE","--gtid_mode=ON","--enforce_gtid_consistency=ON","--log_bin","--log_slave_updates=ON","--master_info_repository=TABLE","--relay_log_info_repository=TABLE","--transaction_write_set_extraction=XXHASH64","--user=mysql","--skip-host-cache","--skip-name-resolve", "--default_authentication_plugin=mysql_native_password"]
+    command: ["mysqld","--server_id=1","--binlog_transaction_dependency_tracking=WRITESET","--binlog_checksum=NONE","--gtid_mode=ON","--enforce_gtid_consistency=ON","--log_bin","--log_slave_updates=ON","--master_info_repository=TABLE","--relay_log_info_repository=TABLE","--transaction_write_set_extraction=XXHASH64","--user=mysql","--skip-host-cache","--skip-name-resolve", "--default_authentication_plugin=mysql_native_password"]
+  mysql-server-2:
+    image: mysql/mysql-server:8.0.32
+    # command: ["mysqld","--server_id=2","loose_group_replication_local_address=mysql-server-2","loose_group_replication_group_seeds=mysql-server-1:33061,mysql-server-2:33061,mysql-server-3:33061","--binlog_transaction_dependency_tracking=WRITESET","--binlog_checksum=NONE","--gtid_mode=ON","--enforce_gtid_consistency=ON","--log_bin","--log_slave_updates=ON","--master_info_repository=TABLE","--relay_log_info_repository=TABLE","--transaction_write_set_extraction=XXHASH64","--user=mysql","--skip-host-cache","--skip-name-resolve", "--default_authentication_plugin=mysql_native_password"]
+    command: ["mysqld","--server_id=2","--binlog_transaction_dependency_tracking=WRITESET","--binlog_checksum=NONE","--gtid_mode=ON","--enforce_gtid_consistency=ON","--log_bin","--log_slave_updates=ON","--master_info_repository=TABLE","--relay_log_info_repository=TABLE","--transaction_write_set_extraction=XXHASH64","--user=mysql","--skip-host-cache","--skip-name-resolve", "--default_authentication_plugin=mysql_native_password"]
+    # ports:
+    #   - "3302:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: "mysql"
+      MYSQL_ROOT_HOST: "%"
+  mysql-server-3:
+    image: mysql/mysql-server:8.0.32
+    # command: ["mysqld","--server_id=3","loose_group_replication_local_address=mysql-server-3","loose_group_replication_group_seeds=mysql-server-1:33061,mysql-server-2:33061,mysql-server-3:33061","--binlog_transaction_dependency_tracking=WRITESET","--binlog_checksum=NONE","--gtid_mode=ON","--enforce_gtid_consistency=ON","--log_bin","--log_slave_updates=ON","--master_info_repository=TABLE","--relay_log_info_repository=TABLE","--transaction_write_set_extraction=XXHASH64","--user=mysql","--skip-host-cache","--skip-name-resolve", "--default_authentication_plugin=mysql_native_password"]
+    command: ["mysqld","--server_id=3","--binlog_transaction_dependency_tracking=WRITESET","--binlog_checksum=NONE","--gtid_mode=ON","--enforce_gtid_consistency=ON","--log_bin","--log_slave_updates=ON","--master_info_repository=TABLE","--relay_log_info_repository=TABLE","--transaction_write_set_extraction=XXHASH64","--user=mysql","--skip-host-cache","--skip-name-resolve", "--default_authentication_plugin=mysql_native_password"]
+    # ports:
+    #   - "3303:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: "mysql"
+      MYSQL_ROOT_HOST: "%"
+  # mysql-shell:
+  #   env_file:
+  #     - mysql-shell.env
+  #   image: neumayer/mysql-shell-batch
+  #   volumes:
+  #       - ./scripts/:/scripts/
+  #   depends_on:
+  #     - mysql-server-1
+  #     - mysql-server-2
+  #     - mysql-server-3
+  # mysql-router:
+  #   env_file:
+  #     - mysql-router.env
+  #   image: mysql/mysql-router:8.0
+  #   ports:
+  #     - "6446:6446"
+  #   depends_on:
+  #     - mysql-server-1
+  #     - mysql-server-2
+  #     - mysql-server-3
+  #     - mysql-shell
+  #   restart: on-failure
+  # dbwebapp:
+  #   env_file:
+  #     - dbwebapp.env
+  #   image: neumayer/dbwebapp
+  #   ports:
+  #     - "8080:8080"
+  #   depends_on:
+  #     - mysql-router
