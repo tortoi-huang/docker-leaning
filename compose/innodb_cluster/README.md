@@ -86,4 +86,5 @@ cluster.switchToSinglePrimaryMode()
 
 ## 问题:
 1. 按配置升级镜像版本8.0.12到8.0.32启动出错，通过添加启动命令行参数解决: --binlog_transaction_dependency_tracking=WRITESET
-1. 镜像版本8.0.12节点重启后不会自动添加到集群，升级到8.0.32解决
+2. 镜像版本8.0.12节点重启后不会自动添加到集群，升级到8.0.32解决
+3. 使用cluster.status()检查集群状态时发现各个节点的address是一个随机字符串，原因是当集群创建时默认使用了hostname来设置变量group_replication_local_address， 通过在docker-compose文件中添加hostname字段定义该文件
