@@ -87,4 +87,9 @@ cluster.switchToSinglePrimaryMode()
 ## 问题:
 1. 按配置升级镜像版本8.0.12到8.0.32启动出错，通过添加启动命令行参数解决: --binlog_transaction_dependency_tracking=WRITESET
 2. 镜像版本8.0.12节点重启后不会自动添加到集群，升级到8.0.32解决
-3. 使用cluster.status()检查集群状态时发现各个节点的address是一个随机字符串，原因是当集群创建时默认使用了hostname来设置变量group_replication_local_address， 通过在docker-compose文件中添加hostname字段定义该文件
+3. 使用cluster.status()检查集群状态时发现各个节点的address是一个随机字符串，原因是当集群创建时默认使用了hostname来设置变量group_replication_local_address， 通过在docker-compose文件中添加hostname字段定义该文件， 也可以通过addInstance(instance, {"localAddress": "${hostname}"})来解决
+4. 当执行 cluster.addInstance({user: "root", host: "mysql-server-2", password: "mysql"})配置时，会在目标实例上执行sql: RESTART 预计，但是docker 关掉之后并不会重启，需要在docker-compose中添加配置 restart: on-failure 来替代
+
+## 配置
+1. 创建集群配置: dba.createCluster("devCluster",{replicationAllowedHost:'192.0.2.0/24',communicationStack: "xcom"});其中 replicationAllowedHost是白名单，communicationStack是通讯协议，默认为mysql。
+2. 添加实例到集群: addInstance(instance[, options]),有诸多参数配置，包括实例重启、断线重连事件间隔，实例地址（参考问题3）等，更多配置参考: https://dev.mysql.com/doc/mysql-shell/8.0/en/add-instances-cluster.html
