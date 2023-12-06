@@ -25,12 +25,12 @@ dba.configureInstance()
 ```
 3. 初始化集群
 ```shell
-# 登录到节点mysql-server-1 mysql shell, 执行创建集群命令, 创建一个名为devCluster的集群
-var cluster = dba.createCluster("devCluster");
-# 将其他节点添加到集群, 按提示选择默认 recovery method(Clone)
-cluster.addInstance({user: "root", host: "mysql-server-2", password: "mysql"})
+# 登录到节点mysql-server-1 mysql shell, 执行创建集群命令, 创建一个名为devCluster的集群， communicationStack默认是mysql，consistency默认是EVENTUAL
+var cluster = dba.createCluster("devCluster", {communicationStack: "XCom", consistency: "BEFORE_ON_PRIMARY_FAILOVER"});
+# 将其他节点添加到集群, waitRecovery默认 1，交互式需要确认并打印数据同步信息，recoveryMethod默认为clone，不选会交互式提示选择
+cluster.addInstance({user: "root", host: "mysql-server-2", password: "mysql"}, {waitRecovery: 0, recoveryMethod: "clone"})
 # 执行完上述命令后mysql-server-2会关闭， 需要手工使用docker start启动，待启动完成后加入集群成功,同样的方式操作mysql-server-3节点
-cluster.addInstance({user: "root", host: "mysql-server-3", password: "mysql"})
+cluster.addInstance({user: "root", host: "mysql-server-3", password: "mysql"}, {waitRecovery: 0, recoveryMethod: "clone"})
 
 # 检查集群状态
 cluster.status()
@@ -86,7 +86,7 @@ cluster.switchToSinglePrimaryMode()
 
 ## 问题:
 1. 按配置升级镜像版本8.0.12到8.0.32启动出错，通过添加启动命令行参数解决: --binlog_transaction_dependency_tracking=WRITESET
-2. 镜像版本8.0.12节点重启后不会自动添加到集群，升级到8.0.32解决
+2. 当节点宕机时，在线的主节点会定时发出rejoin命令，最多会执行3次，超过3次就不会自动rejoin，需要启动宕机节点后手动rejoin。
 3. 使用cluster.status()检查集群状态时发现各个节点的address是一个随机字符串，原因是当集群创建时默认使用了hostname来设置变量group_replication_local_address， 通过在docker-compose文件中添加hostname字段定义该文件， 也可以通过addInstance(instance, {"localAddress": "${hostname}"})来解决
 4. 当执行 cluster.addInstance({user: "root", host: "mysql-server-2", password: "mysql"})配置时，会在目标实例上执行sql: RESTART 预计，但是docker 关掉之后并不会重启，需要在docker-compose中添加配置 restart: on-failure 来替代
 
