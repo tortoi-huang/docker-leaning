@@ -1,0 +1,25 @@
+version: '3'
+services:
+  # broker template
+  broker:
+    image: apachepulsar/pulsar:3.1.1
+    networks:
+      - pulsar
+    environment:
+      - metadataStoreUrl=zk:zookeeper-1:2181,zookeeper-2:2181,zookeeper-3:2181
+      - configurationMetadataStoreUrl=zk:zookeeper-1:2181,zookeeper-2:2181,zookeeper-3:2181
+      # - zookeeperServers=zookeeper-1:2181,zookeeper-2:2181,zookeeper-3:2181
+      - clusterName=cluster-a
+      - managedLedgerDefaultEnsembleSize=1
+      - managedLedgerDefaultWriteQuorum=1
+      - managedLedgerDefaultAckQuorum=1
+      # - advertisedListeners=external:pulsar://127.0.0.1:6650
+      - PULSAR_MEM=-Xms64m -Xmx512m -XX:MaxDirectMemorySize=256m
+    depends_on:
+      bookie-1:
+        condition: service_started
+      bookie-2:
+        condition: service_started
+      bookie-3:
+        condition: service_started
+    command: bash -c "bin/apply-config-from-env.py conf/broker.conf && exec bin/pulsar broker"

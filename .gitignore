@@ -45,3 +45,6 @@ compose/mysqlGR/data3/**
 compose/mysqlGR2/data1/**
 compose/mysqlGR2/data2/**
 compose/mysqlGR2/data3/**
+
+compose/pulsar/data/*
+compose/pulsar/temp/*
