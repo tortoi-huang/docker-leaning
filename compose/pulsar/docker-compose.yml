@@ -10,28 +10,38 @@ services:
       service: zookeeper
     container_name: zookeeper-1
     hostname: zookeeper-1
+    environment:
+      - ZOO_MY_ID=1
     volumes:
-      - ./data/zookeeper1:/pulsar/data/zookeeper
+      - ./data/zookeeper1/data:/data
+      - ./data/zookeeper1/datalog:/datalog
   zookeeper-2:
     extends: 
       file: docker-compose-zk.yml
       service: zookeeper
     container_name: zookeeper-2
     hostname: zookeeper-2
+    environment:
+      - ZOO_MY_ID=2
     volumes:
-      - ./data/zookeeper2:/pulsar/data/zookeeper
+      - ./data/zookeeper2/data:/data
+      - ./data/zookeeper2/datalog:/datalog
   zookeeper-3:
     extends: 
       file: docker-compose-zk.yml
       service: zookeeper
     container_name: zookeeper-3
     hostname: zookeeper-3
+    environment:
+      - ZOO_MY_ID=3
     volumes:
-      - ./data/zookeeper3:/pulsar/data/zookeeper
+      - ./data/zookeeper3/data:/data
+      - ./data/zookeeper3/datalog:/datalog
   zoonavigator:
     extends: 
       file: docker-compose-zk.yml
       service: zoonavigator-temp
+    container_name: zoonavigator
     ports:
       - "9000:9000"
     depends_on:
@@ -64,82 +74,82 @@ services:
       zookeeper-3:
         condition: service_healthy
 
-  # Start bookie
-  bookie-1:
-    extends: 
-      file: docker-compose-bk.yml
-      service: bookie
-    hostname: bookie-1
-    container_name: bookie-1
-    environment:
-      # 这个名字会注册到zk, 如果不设置会注册一个ip，重启就变了,导致bk重启错误
-      - advertisedAddress=bookie-1
-    volumes:
-      # 这里配置了持久化，zk也要配置持久化，否则启动时找不到配置
-      - ./data/bookkeeper1:/pulsar/data/bookkeeper
-    ports:
-      - "9080:8080"
-  bookie-2:
-    extends: 
-      file: docker-compose-bk.yml
-      service: bookie
-    hostname: bookie-2
-    container_name: bookie-2
-    environment:
-      - advertisedAddress=bookie-2
-    volumes:
-      - ./data/bookkeeper2:/pulsar/data/bookkeeper
-    ports:
-      - "9081:8080"
-  bookie-3:
-    extends: 
-      file: docker-compose-bk.yml
-      service: bookie
-    hostname: bookie-3
-    container_name: bookie-3
-    environment:
-      - advertisedAddress=bookie-3
-    volumes:
-      - ./data/bookkeeper3:/pulsar/data/bookkeeper
-    ports:
-      - "9082:8080"
+  # # Start bookie
+  # bookie-1:
+  #   extends: 
+  #     file: docker-compose-bk.yml
+  #     service: bookie
+  #   hostname: bookie-1
+  #   container_name: bookie-1
+  #   environment:
+  #     # 这个名字会注册到zk, 如果不设置会注册一个ip，重启就变了,导致bk重启错误
+  #     - advertisedAddress=bookie-1
+  #   volumes:
+  #     # 这里配置了持久化，zk也要配置持久化，否则启动时找不到配置
+  #     - ./data/bookkeeper1:/pulsar/data/bookkeeper
+  #   ports:
+  #     - "9080:8080"
+  # bookie-2:
+  #   extends: 
+  #     file: docker-compose-bk.yml
+  #     service: bookie
+  #   hostname: bookie-2
+  #   container_name: bookie-2
+  #   environment:
+  #     - advertisedAddress=bookie-2
+  #   volumes:
+  #     - ./data/bookkeeper2:/pulsar/data/bookkeeper
+  #   ports:
+  #     - "9081:8080"
+  # bookie-3:
+  #   extends: 
+  #     file: docker-compose-bk.yml
+  #     service: bookie
+  #   hostname: bookie-3
+  #   container_name: bookie-3
+  #   environment:
+  #     - advertisedAddress=bookie-3
+  #   volumes:
+  #     - ./data/bookkeeper3:/pulsar/data/bookkeeper
+  #   ports:
+  #     - "9082:8080"
 
-  # Start broker
-  broker-1:
-    extends: 
-      file: docker-compose-broke.yml
-      service: broker
-    hostname: broker-1
-    container_name: broker-1
-    environment:
-      - advertisedAddress=broker-1
-    ports:
-      - "6650:6650"
-      - "8080:8080"
+  # # Start broker
+  # broker-1:
+  #   extends: 
+  #     file: docker-compose-broke.yml
+  #     service: broker
+  #   hostname: broker-1
+  #   container_name: broker-1
+  #   environment:
+  #     - advertisedAddress=broker-1
+  #   ports:
+  #     - "6650:6650"
+  #     - "8080:8080"
 
-  broker-2:
-    extends: 
-      file: docker-compose-broke.yml
-      service: broker
-    hostname: broker-2
-    container_name: broker-2
-    environment:
-      - advertisedAddress=broker-2
-    ports:
-      - "6651:6650"
-      - "8081:8080"
+  # broker-2:
+  #   extends: 
+  #     file: docker-compose-broke.yml
+  #     service: broker
+  #   hostname: broker-2
+  #   container_name: broker-2
+  #   environment:
+  #     - advertisedAddress=broker-2
+  #   ports:
+  #     - "6651:6650"
+  #     - "8081:8080"
 
-  broker-3:
-    extends: 
-      file: docker-compose-broke.yml
-      service: broker
-    hostname: broker-3
-    container_name: broker-3
-    environment:
-      - advertisedAddress=broker-3
-    ports:
-      - "6652:6650"
-      - "8082:8080"
+  # broker-3:
+  #   extends: 
+  #     file: docker-compose-broke.yml
+  #     service: broker
+  #   hostname: broker-3
+  #   container_name: broker-3
+  #   environment:
+  #     - advertisedAddress=broker-3
+  #   ports:
+  #     - "6652:6650"
+  #     - "8082:8080"
       
   # pulsar-manager:
   #   hostname: pulsar-manager

@@ -2,19 +2,14 @@ version: '3'
 services:
   # zookeeper template
   zookeeper:
-    image: apachepulsar/pulsar:3.1.1
+    image: zookeeper:3.7.2-jre-17
     networks:
       - pulsar
     environment:
-      - ZOOKEEPER_SERVERS=zookeeper-1,zookeeper-2,zookeeper-3
-      # - PULSAR_MEM=-Xms256m -Xmx256m -XX:MaxDirectMemorySize=256m
-      - PULSAR_MEM=-Xms64m -Xmx64m -XX:MaxDirectMemorySize=64m
-    command: >
-      bash -c "bin/apply-config-from-env.py conf/zookeeper.conf && \
-             bin/generate-zookeeper-config.sh conf/zookeeper.conf && \
-             exec bin/pulsar zookeeper"
+      - ZOO_SERVERS=server.1=zookeeper-1:2888:3888;2181 server.2=zookeeper-2:2888:3888;2181 server.3=zookeeper-3:2888:3888;2181
+    # healthcheck无效
     healthcheck:
-      test: ["CMD", "bin/pulsar-zookeeper-ruok.sh"]
+      test: nc -z localhost 2181 || exit 1
       interval: 10s
       timeout: 5s
       retries: 30
