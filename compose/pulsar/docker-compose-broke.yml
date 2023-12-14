@@ -14,7 +14,8 @@ services:
       - managedLedgerDefaultWriteQuorum=1
       - managedLedgerDefaultAckQuorum=1
       # - advertisedListeners=external:pulsar://127.0.0.1:6650
-      - PULSAR_MEM=-Xms64m -Xmx512m -XX:MaxDirectMemorySize=256m
+      # - PULSAR_MEM=-Xms512m -Xmx512m -XX:MaxDirectMemorySize=256m
+      - PULSAR_MEM=-Xms64m -Xmx128m -XX:MaxDirectMemorySize=64m
     depends_on:
       bookie-1:
         condition: service_started

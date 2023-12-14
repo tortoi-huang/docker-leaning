@@ -14,28 +14,29 @@ docker compose up -d
 ## 测试
 创建一个客户端镜像连接服务器测试
 进入客户端容器:
-shell命令
+shell命令(powershell续行符需要替换为反引号`)
 ```shell
 docker run -it --rm  --network pulsar_pulsar \
-    -e "webServiceUrl=http://broker-1:8080,broker-:8080,broker-3:8080" \
+    -e "webServiceUrl=http://broker-1:8080,broker-2:8080,broker-3:8080" \
     -e "brokerServiceUrl=pulsar://broker-1:6650,broker-2:6650,broker-3:6650" \
-    apachepulsar/pulsar:3.1.1 bash -c "bin/apply-config-from-env.py conf/client.conf && sh"
-```
-或者 powershell
-```powershell
-docker run -it --rm --network pulsar_pulsar `
-    -e "webServiceUrl=http://broker-1:8080,broker-:8080,broker-3:8080" `
-    -e "brokerServiceUrl=pulsar://broker-1:6650,broker-2:6650,broker-3:6650" `
     apachepulsar/pulsar:3.1.1 bash -c "bin/apply-config-from-env.py conf/client.conf && sh"
 ```
 容器内使用客户端操作:
 ```shell
-# 创建一个消费者
+# 创建一个消费者, 消费队列persistent://public/default/test
 bin/pulsar-client consume persistent://public/default/test -n 100 -s "consumer-test" -t "Exclusive"
-# 发送消息
-bin/pulsar-client produce persistent://public/default/test -n 1 -m "Hello Pulsar"
+# 发送消息到队列 persistent://public/default/test
+bin/pulsar-client produce persistent://public/default/test -n 1 -m "Hello Pulsar 1"
+bin/pulsar-client produce public/default/test -n 1 -m "Hello Pulsar 2"
 ```
 
-## 
+## pulsar-manager 访问
+pulsar-manager 还不能在启动时自动创建默认用户，需要手工创建用户.
+登录到pulsar-manager 执行添加账号操作
+```shell
+docker exec -it pulsar-manager bash -c /pulsar-manager/init_manager_user.sh
+```
+
 ## 问题:
-1. 在 pulsar-manager 配置上花了不少时间, 这个东西bug太多, 不能用.
+1. 在 pulsar-manager 配置上花了不少时间, 当前版本不能启动时设置登录名和密码, 需要执行init_manager_user.sh来设置用户名和密码.
+2. pulsar-manager登录后还是无法添加环境，垃圾！

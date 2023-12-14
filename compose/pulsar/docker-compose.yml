@@ -141,4 +141,18 @@ services:
       - "6652:6650"
       - "8082:8080"
       
-  
+  # pulsar-manager:
+  #   hostname: pulsar-manager
+  #   container_name: pulsar-manager
+  #   image: apachepulsar/pulsar-manager:v0.4.0
+  #   # command: init_manager_user.sh
+  #   environment:
+  #     - SPRING_CONFIGURATION_FILE=/pulsar-manager/pulsar-manager/application.properties
+  #     # 下面两个参数没有在容器启动时作用，需要在容器内手工执行 init_manager_user.sh
+  #     - INIT_USER=pulsar
+  #     - INIT_PASSWORD=999999
+  #   volumes:
+  #     - ./script/init_manager_user.sh:/pulsar-manager/init_manager_user.sh
+  #   ports:
+  #     - "9527:9527"
+  #     - "7750:7750"
