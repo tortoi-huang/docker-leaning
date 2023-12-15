@@ -21,7 +21,7 @@ docker run -it --rm  --network pulsar_pulsar \
     -e "brokerServiceUrl=pulsar://broker-1:6650,broker-2:6650,broker-3:6650" \
     apachepulsar/pulsar:3.1.1 bash -c "bin/apply-config-from-env.py conf/client.conf && sh"
 ```
-容器内使用客户端操作:
+1. 客户端操作:
 ```shell
 # 创建一个消费者, 消费队列 persistent://public/default/test, 
 # 这里命名是由格式的, persistent 是协议, 还支持non-persistent协议, 这里是指订阅者的offset是否被存储, 而消息必然是被存储的
@@ -31,6 +31,11 @@ bin/pulsar-client consume persistent://public/default/test -n 100 -s "consumer-t
 bin/pulsar-client produce persistent://public/default/test -n 1 -m "Hello Pulsar 1"
 bin/pulsar-client produce public/default/test -n 1 -m "Hello Pulsar 2"
 ```
+2. 管理pulsar, 管理pulsar的官方命令行工具是 ./pulsar-admin, 下面描述命令是此命令的子命令，执行时要加上此前缀,如列出租户命令为 ./pulsar-admin tenants list
+    1.1. 租户 tenants
+    列出所有租户 tenants list
+    创建租户 tenants create tenant_name, 会在zk:/admin/policies下创建一个节点，可以通过tenants get tenant_name, 看到zk上一样的信息
+    1.2. 命名空间 namespaces
 
 ## pulsar-manager 访问
 pulsar-manager 还不能在启动时自动创建默认用户，需要手工创建用户.
