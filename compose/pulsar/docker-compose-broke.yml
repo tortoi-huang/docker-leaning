@@ -10,17 +10,26 @@ services:
       - configurationMetadataStoreUrl=zk:zookeeper-1:2181,zookeeper-2:2181,zookeeper-3:2181
       # - zookeeperServers=zookeeper-1:2181,zookeeper-2:2181,zookeeper-3:2181
       - clusterName=cluster-a
-      - managedLedgerDefaultEnsembleSize=1
-      - managedLedgerDefaultWriteQuorum=1
-      - managedLedgerDefaultAckQuorum=1
+      # 表示一个ledger会存储在几个 bookie 中，不是每个这些 bookie 都会有一个副本，而是通过哈希计算 entry id 和副本数量决定放到那几个bookie，
+      # 计算不小于managedLedgerDefaultWriteQuorum配置, 不大于bookie服务器数量
+      - managedLedgerDefaultEnsembleSize=3
+      # 重要可选参数，数据副本数，新建Ledger默认需要几个副本
+      - managedLedgerDefaultWriteQuorum=3
+      # 重要可选参数，数据成功副本数, 数据需要写入 managedLedgerDefaultWriteQuorum个副本，但是只要managedLedgerDefaultAckQuorum个副本写成功就表示成功了
+      - managedLedgerDefaultAckQuorum=2
       # - advertisedListeners=external:pulsar://127.0.0.1:6650
       # - PULSAR_MEM=-Xms512m -Xmx512m -XX:MaxDirectMemorySize=256m
       - PULSAR_MEM=-Xms64m -Xmx128m -XX:MaxDirectMemorySize=64m
+    healthcheck:
+      test: ["CMD", "bin/pulsar-admin", "brokers", "healthcheck"]
+      interval: 60s
+      timeout: 3s
+      retries: 60
     depends_on:
       bookie-1:
-        condition: service_started
+        condition: service_healthy
       bookie-2:
-        condition: service_started
+        condition: service_healthy
       bookie-3:
-        condition: service_started
+        condition: service_healthy
     command: bash -c "bin/apply-config-from-env.py conf/broker.conf && exec bin/pulsar broker"

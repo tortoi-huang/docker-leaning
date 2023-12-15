@@ -37,6 +37,7 @@ services:
     volumes:
       - ./data/zookeeper3/data:/data
       - ./data/zookeeper3/datalog:/datalog
+
   zoonavigator:
     extends: 
       file: docker-compose-zk.yml
@@ -116,6 +117,20 @@ services:
       - ./data/bookkeeper3:/data/bookkeeper
     ports:
       - "9082:8080"
+  # # 测试扩容缩容
+  # bookie-4:
+  #   extends: 
+  #     file: docker-compose-bk.yml
+  #     service: bookie
+  #   hostname: bookie-4
+  #   container_name: bookie-4
+  #   environment:
+  #     # - advertisedAddress=bookie-4
+  #     - BK_advertisedAddress=bookie-4
+  #   volumes:
+  #     - ./data/bookkeeper4:/data/bookkeeper
+  #   ports:
+  #     - "9083:8080"
 
   # Start broker
   broker-1:
@@ -154,18 +169,18 @@ services:
       - "6652:6650"
       - "8082:8080"
       
-  pulsar-manager:
-    hostname: pulsar-manager
-    container_name: pulsar-manager
-    image: apachepulsar/pulsar-manager:v0.4.0
-    # command: init_manager_user.sh
-    environment:
-      - SPRING_CONFIGURATION_FILE=/pulsar-manager/pulsar-manager/application.properties
-      # 下面两个参数没有在容器启动时作用，需要在容器内手工执行 init_manager_user.sh
-      - INIT_USER=pulsar
-      - INIT_PASSWORD=999999
-    volumes:
-      - ./script/init_manager_user.sh:/pulsar-manager/init_manager_user.sh
-    ports:
-      - "9527:9527"
-      - "7750:7750"
+  # pulsar-manager:
+  #   hostname: pulsar-manager
+  #   container_name: pulsar-manager
+  #   image: apachepulsar/pulsar-manager:v0.4.0
+  #   # command: init_manager_user.sh
+  #   environment:
+  #     - SPRING_CONFIGURATION_FILE=/pulsar-manager/pulsar-manager/application.properties
+  #     # 下面两个参数没有在容器启动时作用，需要在容器内手工执行 init_manager_user.sh
+  #     - INIT_USER=pulsar
+  #     - INIT_PASSWORD=999999
+  #   volumes:
+  #     - ./script/init_manager_user.sh:/pulsar-manager/init_manager_user.sh
+  #   ports:
+  #     - "9527:9527"
+  #     - "7750:7750"

@@ -26,6 +26,7 @@ docker run -it --rm  --network pulsar_pulsar \
 # 创建一个消费者, 消费队列 persistent://public/default/test, 
 # 这里命名是由格式的, persistent 是协议, 还支持non-persistent协议, 这里是指订阅者的offset是否被存储, 而消息必然是被存储的
 # public 是租户, default是命名空间, test是topic名字
+# 这里 -s "consumer-test" 类似kafka的消费组名称, -t Exclusive 表示独占消费，相同的消费组名只能有一个消费组， 不同组名可以有多个
 bin/pulsar-client consume persistent://public/default/test -n 100 -s "consumer-test" -t "Exclusive"
 # 发送消息到队列 persistent://public/default/test
 bin/pulsar-client produce persistent://public/default/test -n 1 -m "Hello Pulsar 1"
