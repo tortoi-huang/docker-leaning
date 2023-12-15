@@ -1,14 +1,27 @@
+# 尝试搭建一个标准的bookkeeper集群来支持pulsar
+# 参考: https://github.com/apache/bookkeeper/blob/master/deploy/docker-compose/docker-compose.yaml
 version: '3'
 services:
   # bookie template
   bookie:
-    image: apachepulsar/pulsar:3.1.1
+    # pulsar3.1源码上看到用的是4.1.3版本
+    image: apache/bookkeeper:4.16.3
     networks:
       - pulsar
+    links:
+      - zookeeper-1
+      - zookeeper-2
+      - zookeeper-3
     environment:
-      - metadataServiceUri=metadata-store:zk:zookeeper-1:2181,zookeeper-2:2181,zookeeper-3:2181/ledgers
-      # - BOOKIE_MEM=-Xms512m -Xmx512m -XX:MaxDirectMemorySize=256m
-      - BOOKIE_MEM=-Xms64m -Xmx128m -XX:MaxDirectMemorySize=64m
+      - BK_zkServers=zookeeper-1:2181,zookeeper-2:2181,zookeeper-3:2181
+      - BK_metadataServiceUri=zk+hierarchical://zookeeper-1:2181;zookeeper-2:2181;zookeeper-3:2181/ledgers
+    healthcheck:
+      # 官方github上的示例是错误的， 容器内没有curl
+      # test: ["CMD", "curl", "-s", "http://localhost:8080/heartbeat"]
+      test: ["CMD", "wget", "-O-", "http://localhost:8080/heartbeat"]
+      interval: 60s
+      timeout: 3s
+      retries: 60
     depends_on:
       zookeeper-1:
         condition: service_healthy
@@ -16,6 +29,5 @@ services:
         condition: service_healthy
       zookeeper-3:
         condition: service_healthy
-      pulsar-init:
-        condition: service_completed_successfully
-    command: bash -c "bin/apply-config-from-env.py conf/bookkeeper.conf && exec bin/pulsar bookie"
+      # pulsar-init:
+      #   condition: service_completed_successfully
