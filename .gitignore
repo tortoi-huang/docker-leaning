@@ -49,6 +49,6 @@ compose/mysqlGR2/data3/**
 compose/pulsar/data/*
 compose/pulsar/temp/*
 
-compose/kafka/data/*
+compose/kafka_build_img/data/*
 compose/kafka3/data/*
 compose/kafka2/data/*
