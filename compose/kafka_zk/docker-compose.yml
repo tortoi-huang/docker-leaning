@@ -58,6 +58,7 @@ services:
   kfk1: &kfk-server
     image: docker.io/bitnami/kafka:3.5
     hostname: kafka1
+    user: "root"
     environment: &kfk-env
       ALLOW_PLAINTEXT_LISTENER: yes
       # KRaft settings

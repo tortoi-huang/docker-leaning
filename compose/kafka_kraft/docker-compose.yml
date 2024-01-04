@@ -7,6 +7,8 @@ version: "3.8"
 # docker compose 规定配置需要以x-开头
 x-kafka: &kfk-server
   image: docker.io/bitnami/kafka:3.5
+  # 镜像指定了用1001:root用户，需要更改，否则挂载的目录是属于root用户的，会导致没权限无法启动
+  user: "root"
   # &kfk-server锚点引用覆盖会将整个environment元素删除替换新的元素，而不是合并
   environment: &kfk-env
     ALLOW_PLAINTEXT_LISTENER: yes
@@ -120,7 +122,7 @@ services:
       DYNAMIC_CONFIG_ENABLED: 'true'
       KAFKA_CLUSTERS_0_NAME: kafka_test
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka0:9092,kafka1:9092,kafka2:9092
-      KAFKA_CLUSTERS_0_READONLY: true
+      # KAFKA_CLUSTERS_0_READONLY: true
     # volumes:
     #   - ~/kui/config.yml:/etc/kafkaui/dynamic_config.yaml
     networks: 
