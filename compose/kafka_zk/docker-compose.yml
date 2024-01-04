@@ -78,8 +78,8 @@ services:
       - zoo1
       - zoo2
       - zoo3
-    # volumes: 
-    #   - ./data/kafka/kafka1:/bitnami/kafka
+    volumes: 
+      - ./data/kafka/kafka1:/bitnami/kafka
     networks: 
       - kafka
   kfk2:
@@ -88,16 +88,16 @@ services:
     environment: 
       << : *kfk-env
       KAFKA_CFG_NODE_ID: 2
-    # volumes: 
-    #   - ./data/kafka/kafka2:/bitnami/kafka
+    volumes: 
+      - ./data/kafka/kafka2:/bitnami/kafka
   kfk3:
     <<: *kfk-server
     hostname: kafka3
     environment: 
       << : *kfk-env
       KAFKA_CFG_NODE_ID: 3
-    # volumes:
-    #   - ./data/kafka/kafka3:/bitnami/kafka
+    volumes:
+      - ./data/kafka/kafka3:/bitnami/kafka
 
   kafka-ui:
     container_name: kafka-ui

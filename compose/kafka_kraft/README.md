@@ -1,2 +1,2 @@
-# 创建pulsar集群
+# 创建 kafka kraft集群
 ## 目标:
