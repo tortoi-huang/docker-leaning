@@ -21,11 +21,18 @@ x-kafka: &kfk-server
     KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: true
   networks: 
     - kafka-cluster
+  healthcheck:
+    # test: nc -z localhost 2181 || exit 1
+    test: ["CMD", "/opt/bitnami/kafka/bin/kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--list"]
+    interval: 10s
+    timeout: 5s
+    retries: 30
 services:
   # 使用yaml的锚点语法建立模板
   kafka0: 
     << : *kfk-server
     hostname: kafka0
+    container_name: kafka0
     # ports:
     #   - "19092:19092"
     # 外挂磁盘，测试删除数据恢复
@@ -41,6 +48,7 @@ services:
     # 使用yaml的锚点语法引用锚点
     << : *kfk-server
     hostname: kafka1
+    container_name: kafka1
     # ports:
     #   - "19093:19093"
     volumes: 
@@ -54,6 +62,7 @@ services:
   kafka2:
     << : *kfk-server
     hostname: kafka2
+    container_name: kafka2
     # ports:
     #   - "19094:19094"
     volumes: 
@@ -64,6 +73,70 @@ services:
       # 启动主机外部访问，主机外部访问需要使用不同端口，并且需要配置host文件 127.0.0.1 kafka2
       # KAFKA_CFG_LISTENERS: PLAINTEXT://:19094,CONTROLLER://:9093
       # KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://:19094
+
+  kafka-exporter:
+    image: docker.io/bitnami/kafka-exporter:1.7.0
+    user: "root"
+    command: ["--kafka.server=kafka0:9092", "--kafka.server=kafka1:9092", "--kafka.server=kafka2:9092"]
+    hostname: kafka-exporter
+    container_name: kafka-exporter
+    ports:
+      - 9308:9308
+    networks: 
+      - kafka-cluster
+    depends_on: 
+      kafka0: 
+        condition: service_healthy
+      kafka1: 
+        condition: service_healthy
+      kafka2: 
+        condition: service_healthy
+
+  prometheus:
+    image: bitnami/prometheus:2.48.1
+    # user: "root"
+    hostname: prometheus
+    container_name: prometheus
+    volumes: 
+      - prometheus_v:/opt/bitnami/prometheus/data
+      # 配置kafka exporter地址
+      - ./config/prometheus.yml:/opt/bitnami/prometheus/conf/prometheus.yml
+    ports:
+      - 9090:9090
+    depends_on: 
+      - kafka-exporter
+    networks: 
+      - kafka-cluster
+
+  grafana:
+    # image: docker.io/bitnami/grafana:10.2.3
+    image: grafana/grafana:10.0.10
+    # user: "root"
+    hostname: grafana
+    container_name: grafana
+    ports:
+      - '3000:3000'
+    volumes:
+      # - ./data/grafana:/var/lib/grafana
+      - grafana_v:/var/lib/grafana
+    networks: 
+      - kafka-cluster
+
+  # grafana:
+  #   image: docker.io/bitnami/grafana:10.2.3
+  #   # user: "root"
+  #   hostname: grafana
+  #   container_name: grafana
+  #   ports:
+  #     - '3000:3000'
+  #   environment:
+  #     # 用户名 admin
+  #     - 'GF_SECURITY_ADMIN_PASSWORD=bitnami'
+  #   # volumes:
+  #     # - ./data/grafana:/opt/bitnami/grafana/data
+  #     # - grafana_v:/opt/bitnami/grafana1/data1
+  #   networks: 
+  #     - kafka-cluster
 
   # ksqldb-server:
   #   image: confluentinc/ksqldb-server:0.29.0
@@ -134,10 +207,14 @@ networks:
       driver: default
       config: 
         - subnet: 192.168.164.0/20
-# volumes:
+volumes:
 #   kafka_0_data:
 #     driver: local
 #   kafka_1_data:
 #     driver: local
 #   kafka_2_data:
 #     driver: local
+  prometheus_v:
+    driver: local
+  grafana_v:
+    driver: local

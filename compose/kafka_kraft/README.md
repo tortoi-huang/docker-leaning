@@ -41,3 +41,12 @@ bin/kafka-producer-perf-test.sh --topic test1 --num-records 1000000 --record-siz
 bin/kafka-consumer-perf-test.sh --bootstrap-server kafka1:9092 --topic test1 --fetch-size 1000 --messages 1000000
 ```
 
+# 添加 kafka-exporter + prometheus + grafana监控
+## 步骤
+1. 部署kafka-exporter 暴露kafka指标数据 可通过 http://kafka-exporter:9308/metrics 访问指标数据。通过docker的 command: ["--kafka.server=kafka0:9092", "--kafka.server=kafka1:9092", "--kafka.server=kafka2:9092"] 指定需要暴露的kafka节点信息。
+prometheus 官网提供了各种中间件的 exporter: https://prometheus.io/docs/instrumenting/exporters/
+2. 部署 prometheus ，通过修改./config/prometheus.yml文件，指定kafka-exporter地址 targets: ["kafka-exporter:9308"]
+3. 部署 grafana， 部署启动后登录到Dashboards添加kafka-exporter Dashboards id为 7589，可通过grafana查询可导入的图形 https://grafana.com/grafana/dashboards/
+
+## 问题
+1. bitnami 的镜像都是通过用户1001启动进程， 这里 bitnami/grafana 授权似乎有问题，挂载目录总是提示没有权限，不能使用目录挂载。改用官网镜像后使用默认用户执行没有此问题
