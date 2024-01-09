@@ -1,50 +1,76 @@
-version: "3.1" 
+version: "3.8" 
+
+x-datanode: &datanode_temp
+  image: ${hadoop_image}
+  command: ["hdfs", "datanode"]
+  env_file:
+    - ./config.env
+  depends_on:
+    namenode:
+      condition: service_healthy
 
 services:
   namenode:
     image: ${hadoop_image}
     hostname: namenode
+    container_name: namenode
     command: ["hdfs", "namenode"]
     ports:
       - 9870:9870
     env_file:
-      - ./config
+      - ./config.env
     environment:
         ENSURE_NAMENODE_DIR: "/tmp/hadoop-root/dfs/name"
+    volumes:
+      # - ./data/namenode:/data/hadoop/tmp
+      - namenode_data:/data/hadoop/tmp
+    healthcheck:
+      test: ["CMD", "curl", "-s", "http://localhost:9870"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
 
   datanode1:
+    << : *datanode_temp
     image: ${hadoop_image}
     hostname: datanode1
-    command: ["hdfs", "datanode"]
-    env_file:
-      - ./config
+    container_name: datanode1
+    # volumes:
+    #   - ./data/datanode1:/data/hadoop/tmp
   datanode2:
-    image: ${hadoop_image}
+    << : *datanode_temp
     hostname: datanode2
-    command: ["hdfs", "datanode"]
-    env_file:
-      - ./config
+    container_name: datanode2
+    # volumes:
+    #   - ./data/datanode2:/data/hadoop/tmp
   datanode3:
-    image: ${hadoop_image}
+    << : *datanode_temp
     hostname: datanode3
-    command: ["hdfs", "datanode"]
-    env_file:
-      - ./config
+    container_name: datanode3
+    # volumes:
+    #   - ./data/datanode3:/data/hadoop/tmp
+
   resourcemanager:
     image: ${hadoop_image}
     hostname: resourcemanager
+    container_name: resourcemanager
     command: ["yarn", "resourcemanager"]
     ports:
       - 8088:8088
     env_file:
-      - ./config
+      - ./config.env
     # volumes:
-    #   - ./test.sh:/opt/test.sh
+    #   - ./data/resourcemanager:/data/hadoop/tmp
   nodemanager:
     image: ${hadoop_image}
+    hostname: nodemanager
+    container_name: nodemanager
     command: ["yarn", "nodemanager"]
     env_file:
-      - ./config
+      - ./config.env
+    # volumes:
+    #   - ./data/nodemanager:/data/hadoop/tmp
+
   # hive:
   #   image: apache/hive:3.1.3
   #   depends_on:
@@ -70,3 +96,19 @@ services:
   #     - POSTGRESQL_DATABASE=metastore_db
   #   ports:
   #     - 5432
+
+volumes:
+#   kafka_0_data:
+#     driver: local
+#   kafka_1_data:
+#     driver: local
+#   kafka_2_data:
+#     driver: local
+  namenode_data:
+    driver: local
+  datanode1_data:
+    driver: local
+  datanode2_data:
+    driver: local
+  datanode3_data:
+    driver: local
