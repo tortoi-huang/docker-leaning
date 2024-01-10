@@ -54,3 +54,4 @@ compose/kafka_kraft/data/*
 compose/kafka_zk/data/*
 
 compose/hadoop/data
+compose/minio/data

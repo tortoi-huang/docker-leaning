@@ -1,0 +1,116 @@
+version: "3.8" 
+
+x-minio: &minio_tmp
+  image: bitnami/minio:2023.12.23
+  # 镜像指定了用1001:root用户，需要更改，否则挂载的目录是属于root用户的，会导致没权限无法启动
+  user: "root"
+  # &kfk-server锚点引用覆盖会将整个environment元素删除替换新的元素，而不是合并
+  environment: &minio-env
+    MINIO_ROOT_USER: minio
+    MINIO_ROOT_PASSWORD: minio123
+    MINIO_DISTRIBUTED_MODE_ENABLED: yes
+    MINIO_DISTRIBUTED_NODES: minio0,minio1,minio2,minio3
+    MINIO_SKIP_CLIENT: yes
+    MINIO_PROMETHEUS_URL: http://prometheus:9090
+    # 这里只配置cluster的jobid
+    MINIO_PROMETHEUS_JOB_ID: minio_cluster
+    MINIO_PROMETHEUS_AUTH_TYPE: public
+  networks: 
+    - minio-cluster
+  # healthcheck:
+  #   # test: nc -z localhost 2181 || exit 1
+  #   test: ["CMD", "/opt/bitnami/kafka/bin/kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--list"]
+  #   interval: 10s
+  #   timeout: 5s
+  #   retries: 30
+services:
+  minio0: 
+    << : *minio_tmp
+    hostname: minio0
+    container_name: minio0
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    # 外挂磁盘，测试删除数据恢复
+    volumes: 
+      - ./data/minio0:/bitnami/minio/data
+    # environment: 
+    #   << : *minio-env
+    #   KAFKA_CFG_NODE_ID: 0
+  minio1:
+    << : *minio_tmp
+    hostname: minio1
+    container_name: minio1
+    # ports:
+    #   - "9000:9000"
+    #   - "9001:9001"
+    volumes: 
+      - ./data/minio1:/bitnami/minio/data
+    # environment: 
+    #   << : *minio-env
+    #   KAFKA_CFG_NODE_ID: 1
+  minio2:
+    << : *minio_tmp
+    hostname: minio2
+    container_name: minio2
+    # ports:
+    #   - "19094:19094"
+    volumes: 
+      - ./data/minio2:/bitnami/minio/data
+    # environment: 
+    #   << : *minio-env
+    #   KAFKA_CFG_NODE_ID: 2
+  minio3:
+    << : *minio_tmp
+    hostname: minio3
+    container_name: minio3
+    # ports:
+    #   - "19094:19094"
+    volumes: 
+      - ./data/minio3:/bitnami/minio/data
+    # environment: 
+    #   << : *minio-env
+    #   KAFKA_CFG_NODE_ID: 2
+
+  prometheus:
+    image: bitnami/prometheus:2.48.1
+    hostname: prometheus
+    container_name: prometheus
+    volumes: 
+      - prometheus_minio:/opt/bitnami/prometheus/data
+      - ./config/prometheus.yml:/opt/bitnami/prometheus/conf/prometheus.yml
+      - ./config/minio-alerting.yml:/opt/bitnami/prometheus/conf/minio-alerting.yml
+    ports:
+      - 9090:9090
+    networks: 
+      - minio-cluster
+
+  # grafana:
+  #   image: grafana/grafana:10.0.10
+  #   hostname: grafana
+  #   container_name: grafana
+  #   ports:
+  #     - '3000:3000'
+  #   volumes:
+  #     - grafana_minio:/var/lib/grafana
+  #   networks: 
+  #     - minio-cluster
+
+networks:
+  minio-cluster: 
+    driver: bridge
+    name: minio-cluster
+
+volumes:
+  minio0:
+    driver: local
+  minio1:
+    driver: local
+  minio2:
+    driver: local
+  minio3:
+    driver: local
+  prometheus_minio:
+    driver: local
+  grafana_minio:
+    driver: local
