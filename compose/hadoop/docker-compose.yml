@@ -15,6 +15,7 @@ services:
     hostname: namenode
     container_name: namenode
     command: ["hdfs", "namenode"]
+    user: root
     ports:
       - 9870:9870
     env_file:
@@ -22,8 +23,8 @@ services:
     environment:
         ENSURE_NAMENODE_DIR: "/tmp/hadoop-root/dfs/name"
     volumes:
-      # - ./data/namenode:/data/hadoop/tmp
-      - namenode_data:/data/hadoop/tmp
+      - ./data/namenode:/data/hadoop/tmp
+      # - namenode_data:/data/hadoop/tmp
     healthcheck:
       test: ["CMD", "curl", "-s", "http://localhost:9870"]
       interval: 10s
@@ -35,20 +36,29 @@ services:
     image: ${hadoop_image}
     hostname: datanode1
     container_name: datanode1
-    # volumes:
-    #   - ./data/datanode1:/data/hadoop/tmp
+    user: root
+    volumes:
+      - ./data/datanode1:/data/hadoop/tmp
+      # - ./data/datanode1_data:/data/hadoop/tmp/dfs/data
+      # - datanode1_data:/data/hadoop/tmp
   datanode2:
     << : *datanode_temp
     hostname: datanode2
     container_name: datanode2
-    # volumes:
-    #   - ./data/datanode2:/data/hadoop/tmp
+    user: root
+    volumes:
+      - ./data/datanode2:/data/hadoop/tmp
+      # - ./data/datanode2_data:/data/hadoop/tmp/dfs/data
+      # - datanode2_data:/data/hadoop/tmp
   datanode3:
     << : *datanode_temp
     hostname: datanode3
     container_name: datanode3
-    # volumes:
-    #   - ./data/datanode3:/data/hadoop/tmp
+    user: root
+    volumes:
+      - ./data/datanode3:/data/hadoop/tmp
+      # - ./data/datanode3_data:/data/hadoop/tmp/dfs/data
+      # - datanode3_data:/data/hadoop/tmp
 
   resourcemanager:
     image: ${hadoop_image}
@@ -59,8 +69,9 @@ services:
       - 8088:8088
     env_file:
       - ./config.env
-    # volumes:
-    #   - ./data/resourcemanager:/data/hadoop/tmp
+    volumes:
+      - ./data/resourcemanager:/data/hadoop/tmp
+      # - resourcemanager_data:/data/hadoop/tmp
   nodemanager:
     image: ${hadoop_image}
     hostname: nodemanager
@@ -68,8 +79,9 @@ services:
     command: ["yarn", "nodemanager"]
     env_file:
       - ./config.env
-    # volumes:
-    #   - ./data/nodemanager:/data/hadoop/tmp
+    volumes:
+      - ./data/nodemanager:/data/hadoop/tmp
+      # - nodemanager_data:/data/hadoop/tmp
 
   # hive:
   #   image: apache/hive:3.1.3
@@ -111,4 +123,8 @@ volumes:
   datanode2_data:
     driver: local
   datanode3_data:
+    driver: local
+  resourcemanager_data:
+    driver: local
+  nodemanager_data:
     driver: local

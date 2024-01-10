@@ -52,3 +52,5 @@ compose/pulsar/temp/*
 compose/kafka_build_img/data/*
 compose/kafka_kraft/data/*
 compose/kafka_zk/data/*
+
+compose/hadoop/data
