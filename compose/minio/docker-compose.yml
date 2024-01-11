@@ -2,19 +2,20 @@ version: "3.8"
 
 x-minio: &minio_tmp
   image: bitnami/minio:2023.12.23
-  # 镜像指定了用1001:root用户，需要更改，否则挂载的目录是属于root用户的，会导致没权限无法启动
-  user: "root"
-  # &kfk-server锚点引用覆盖会将整个environment元素删除替换新的元素，而不是合并
   environment: &minio-env
     MINIO_ROOT_USER: minio
     MINIO_ROOT_PASSWORD: minio123
     MINIO_DISTRIBUTED_MODE_ENABLED: yes
+    MINIO_VOLUMES: "/bitnami/minio/data-{0...1}"
     MINIO_DISTRIBUTED_NODES: minio0,minio1,minio2,minio3
     MINIO_SKIP_CLIENT: yes
     MINIO_PROMETHEUS_URL: http://prometheus:9090
     # 这里只配置cluster的jobid
     MINIO_PROMETHEUS_JOB_ID: minio_cluster
     MINIO_PROMETHEUS_AUTH_TYPE: public
+  depends_on:
+    prepare-data:
+      condition: service_completed_successfully
   networks: 
     - minio-cluster
   # healthcheck:
@@ -24,6 +25,29 @@ x-minio: &minio_tmp
   #   timeout: 5s
   #   retries: 30
 services:
+  prepare-data:
+    image: 'docker.io/bitnami/os-shell:latest'
+    user: root
+    # bitnami 镜像指定了用1001:root用户，需要更改，否则挂载的目录是属于root用户的，会导致没权限无法启动
+    command:
+      - /bin/bash
+      - -ec
+      - |
+        chmod -R g+rwX /data0 /data0-0 /data0-1 /data1 /data1-0 /data1-1 /data2 /data2-0 /data2-1 /data3 /data3-0 /data3-1
+    volumes:
+      - minio0:/data0
+      - minio00:/data0-0
+      - minio01:/data0-1
+      - minio1:/data1
+      - minio10:/data1-0
+      - minio11:/data1-1
+      - minio2:/data2
+      - minio20:/data2-0
+      - minio21:/data2-1
+      - minio3:/data3
+      - minio30:/data3-0
+      - minio31:/data3-1
+
   minio0: 
     << : *minio_tmp
     hostname: minio0
@@ -31,50 +55,51 @@ services:
     ports:
       - "9000:9000"
       - "9001:9001"
-    # 外挂磁盘，测试删除数据恢复
     volumes: 
-      - ./data/minio0:/bitnami/minio/data
-    # environment: 
-    #   << : *minio-env
-    #   KAFKA_CFG_NODE_ID: 0
+      - minio0:/bitnami/minio/data
+      - minio00:/bitnami/minio/data-0
+      - minio01:/bitnami/minio/data-1
   minio1:
     << : *minio_tmp
     hostname: minio1
     container_name: minio1
-    # ports:
-    #   - "9000:9000"
-    #   - "9001:9001"
     volumes: 
-      - ./data/minio1:/bitnami/minio/data
-    # environment: 
-    #   << : *minio-env
-    #   KAFKA_CFG_NODE_ID: 1
+      - minio1:/bitnami/minio/data
+      - minio10:/bitnami/minio/data-0
+      - minio11:/bitnami/minio/data-1
+
   minio2:
     << : *minio_tmp
     hostname: minio2
     container_name: minio2
-    # ports:
-    #   - "19094:19094"
     volumes: 
-      - ./data/minio2:/bitnami/minio/data
-    # environment: 
-    #   << : *minio-env
-    #   KAFKA_CFG_NODE_ID: 2
+      - minio2:/bitnami/minio/data
+      - minio20:/bitnami/minio/data-0
+      - minio21:/bitnami/minio/data-1
   minio3:
     << : *minio_tmp
     hostname: minio3
     container_name: minio3
-    # ports:
-    #   - "19094:19094"
     volumes: 
-      - ./data/minio3:/bitnami/minio/data
-    # environment: 
-    #   << : *minio-env
-    #   KAFKA_CFG_NODE_ID: 2
+      - minio3:/bitnami/minio/data
+      - minio30:/bitnami/minio/data-0
+      - minio31:/bitnami/minio/data-1
+
+  # nginx:
+  #   image: nginx:1.25.3
+  #   hostname: minio-proxy
+  #   ports:
+  #     - "80:80"
+  #   volumes: 
+  #     - ./config/nginx.conf:/etc/nginx/conf.d/custom.conf:ro
+  #   networks: 
+  #     - minio-cluster
 
   prometheus:
     image: bitnami/prometheus:2.48.1
     hostname: prometheus
+    # 默认为1001
+    # user: "root"
     container_name: prometheus
     volumes: 
       - prometheus_minio:/opt/bitnami/prometheus/data
@@ -104,13 +129,79 @@ networks:
 volumes:
   minio0:
     driver: local
+    driver_opts: 
+      type: 'none'
+      o: 'bind'
+      device: './data/minio0'
+  minio00:
+    driver: local
+    driver_opts: 
+      type: 'none'
+      o: 'bind'
+      device: './data/minio00'
+  minio01:
+    driver: local
+    driver_opts: 
+      type: 'none'
+      o: 'bind'
+      device: './data/minio01'
+
   minio1:
     driver: local
+    driver_opts: 
+      type: 'none'
+      o: 'bind'
+      device: './data/minio1'
+  minio10:
+    driver: local
+    driver_opts: 
+      type: 'none'
+      o: 'bind'
+      device: './data/minio10'
+  minio11:
+    driver: local
+    driver_opts: 
+      type: 'none'
+      o: 'bind'
+      device: './data/minio11'
   minio2:
     driver: local
+    driver_opts: 
+      type: 'none'
+      o: 'bind'
+      device: './data/minio2'
+  minio20:
+    driver: local
+    driver_opts: 
+      type: 'none'
+      o: 'bind'
+      device: './data/minio20'
+  minio21:
+    driver: local
+    driver_opts: 
+      type: 'none'
+      o: 'bind'
+      device: './data/minio21'
   minio3:
     driver: local
+    driver_opts: 
+      type: 'none'
+      o: 'bind'
+      device: './data/minio3'
+  minio30:
+    driver: local
+    driver_opts: 
+      type: 'none'
+      o: 'bind'
+      device: './data/minio30'
+  minio31:
+    driver: local
+    driver_opts: 
+      type: 'none'
+      o: 'bind'
+      device: './data/minio31'
+
   prometheus_minio:
     driver: local
-  grafana_minio:
-    driver: local
+  # grafana_minio:
+  #   driver: local

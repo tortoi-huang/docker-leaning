@@ -1,4 +1,5 @@
-# docker-leaning
+# 部署测试minio
+参考 https://github.com/bitnami/containers/blob/main/bitnami/minio/docker-compose-distributed-multidrive.yml
 ## 部署服务
 1. 启动服务，访问 http://localhost:9001 ，
 2. 创建 Access Key
@@ -56,7 +57,7 @@ MINIO_PROMETHEUS_AUTH_TYPE: public
 ### 桶权限
 1. 添加一个桶: bucket1, 该桶下新建三个目录: public_write, public_read, private; 现在控制桶的权限 public_read 可以匿名读取，public_write可以匿名写入， user1_only 需要 user1 才能读写。
     a. public_read可以通过添加匿名策略（Anonymous Access）前缀分别为目录名称来实现
-    b. user1_only需要配置 策略文件, 添加一个policy如下 TODO:
+    b. user1_only需要配置 策略文件, 添加一个policy如下(参考: https://min.io/docs/minio/linux/administration/identity-access-management/policy-based-access-control.html#minio-policy-actions):
     ```json
     {
         "Version": "2012-10-17",
