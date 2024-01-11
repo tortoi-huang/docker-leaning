@@ -6,8 +6,11 @@ x-minio: &minio_tmp
     MINIO_ROOT_USER: minio
     MINIO_ROOT_PASSWORD: minio123
     MINIO_DISTRIBUTED_MODE_ENABLED: yes
-    MINIO_VOLUMES: "/bitnami/minio/data-{0...1}"
-    MINIO_DISTRIBUTED_NODES: minio0,minio1,minio2,minio3
+    # MINIO_VOLUMES: "/bitnami/minio/data-{0...1}"
+    # MINIO_DISTRIBUTED_NODES: minio0,minio1,minio2,minio3
+    # MINIO_DISTRIBUTED_NODES: minio0/data-0,minio1/data-0,minio2/data-0,minio3/data-0,minio0/data-1,minio1/data-1,minio2/data-1,minio3/data-1
+    # 坑爹，只能这样写，逐个节点和磁盘列出不行
+    MINIO_DISTRIBUTED_NODES: minio{0...3}/data-{0...1}
     MINIO_SKIP_CLIENT: yes
     MINIO_PROMETHEUS_URL: http://prometheus:9090
     # 这里只配置cluster的jobid
@@ -57,16 +60,16 @@ services:
       - "9001:9001"
     volumes: 
       - minio0:/bitnami/minio/data
-      - minio00:/bitnami/minio/data-0
-      - minio01:/bitnami/minio/data-1
+      - minio00:/data-0
+      - minio01:/data-1
   minio1:
     << : *minio_tmp
     hostname: minio1
     container_name: minio1
     volumes: 
       - minio1:/bitnami/minio/data
-      - minio10:/bitnami/minio/data-0
-      - minio11:/bitnami/minio/data-1
+      - minio10:/data-0
+      - minio11:/data-1
 
   minio2:
     << : *minio_tmp
@@ -74,16 +77,16 @@ services:
     container_name: minio2
     volumes: 
       - minio2:/bitnami/minio/data
-      - minio20:/bitnami/minio/data-0
-      - minio21:/bitnami/minio/data-1
+      - minio20:/data-0
+      - minio21:/data-1
   minio3:
     << : *minio_tmp
     hostname: minio3
     container_name: minio3
     volumes: 
       - minio3:/bitnami/minio/data
-      - minio30:/bitnami/minio/data-0
-      - minio31:/bitnami/minio/data-1
+      - minio30:/data-0
+      - minio31:/data-1
 
   # nginx:
   #   image: nginx:1.25.3
