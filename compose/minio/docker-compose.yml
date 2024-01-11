@@ -6,6 +6,7 @@ x-minio: &minio_tmp
     MINIO_ROOT_USER: minio
     MINIO_ROOT_PASSWORD: minio123
     MINIO_DISTRIBUTED_MODE_ENABLED: yes
+    # bitnami镜像 MINIO_VOLUMES 参数不能设置，否则导致脑裂
     # MINIO_VOLUMES: "/bitnami/minio/data-{0...1}"
     # MINIO_DISTRIBUTED_NODES: minio0,minio1,minio2,minio3
     # MINIO_DISTRIBUTED_NODES: minio0/data-0,minio1/data-0,minio2/data-0,minio3/data-0,minio0/data-1,minio1/data-1,minio2/data-1,minio3/data-1
@@ -88,15 +89,15 @@ services:
       - minio30:/data-0
       - minio31:/data-1
 
-  # nginx:
-  #   image: nginx:1.25.3
-  #   hostname: minio-proxy
-  #   ports:
-  #     - "80:80"
-  #   volumes: 
-  #     - ./config/nginx.conf:/etc/nginx/conf.d/custom.conf:ro
-  #   networks: 
-  #     - minio-cluster
+  nginx:
+    image: nginx:1.25.3
+    # hostname: minio-proxy
+    ports:
+      - "80:80"
+    volumes: 
+      - ./config/nginx.conf:/etc/nginx/conf.d/custom.conf:ro
+    networks: 
+      - minio-cluster
 
   prometheus:
     image: bitnami/prometheus:2.48.1
