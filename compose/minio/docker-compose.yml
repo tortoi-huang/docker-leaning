@@ -99,7 +99,7 @@ services:
     environment:
       MINIO_MAIN_DOMAIN: ${minio_domain}
     volumes: 
-      # 这里会将环境变量替换掉，输出到 /etc/nginx/templates/minio_proxy.conf, 可以通过环境变量 NGINX_ENVSUBST_TEMPLATE_DIR, NGINX_ENVSUBST_TEMPLATE_SUFFIX, NGINX_ENVSUBST_OUTPUT_DIR 改变
+      # 这里会将环境变量替换掉，输出到 /etc/nginx/conf.d/minio_proxy.conf, 可以通过环境变量 NGINX_ENVSUBST_TEMPLATE_DIR, NGINX_ENVSUBST_TEMPLATE_SUFFIX, NGINX_ENVSUBST_OUTPUT_DIR 改变
       - ./config/nginx.conf:/etc/nginx/templates/minio_proxy.conf.template:ro
     networks: 
       - minio-cluster
