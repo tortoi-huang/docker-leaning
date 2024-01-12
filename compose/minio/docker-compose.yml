@@ -7,9 +7,7 @@ x-minio: &minio_tmp
     MINIO_ROOT_PASSWORD: minio123
     MINIO_DISTRIBUTED_MODE_ENABLED: yes
     # bitnami镜像 MINIO_VOLUMES 参数不能设置，否则导致脑裂
-    # MINIO_VOLUMES: "/bitnami/minio/data-{0...1}"
-    # MINIO_DISTRIBUTED_NODES: minio0,minio1,minio2,minio3
-    # MINIO_DISTRIBUTED_NODES: minio0/data-0,minio1/data-0,minio2/data-0,minio3/data-0,minio0/data-1,minio1/data-1,minio2/data-1,minio3/data-1
+    # MINIO_VOLUMES: "/bitnami/minio/data-{0...1}"minio3/data-1
     # 坑爹，只能这样写，逐个节点和磁盘列出不行
     MINIO_DISTRIBUTED_NODES: minio{0...3}/data-{0...1}
     MINIO_SKIP_CLIENT: yes
@@ -19,23 +17,17 @@ x-minio: &minio_tmp
     MINIO_PROMETHEUS_AUTH_TYPE: public
 
     # 9000 端口的域名, 要配置nginx代理的域名, 之前配置主域名localhost 导致无法登录
-    MINIO_DOMAIN: api.localhost
+    MINIO_DOMAIN: api.${minio_domain}
     # 配置了这个参数后就不能登录了，现在还不能确定原因
-    # MINIO_SERVER_URL: http://api.localhost
+    # MINIO_SERVER_URL: http://api.${minio_domain}
     # 9001 端口的域名, 要配置nginx代理的域名，否则浏览器访问跳转到 minio的端口和上下文，而不是代理的端口和上下文
-    MINIO_BROWSER_REDIRECT_URL: http://console.localhost
+    MINIO_BROWSER_REDIRECT_URL: http://console.${minio_domain}
     
   depends_on:
     prepare-data:
       condition: service_completed_successfully
   networks: 
     - minio-cluster
-  # healthcheck:
-  #   # test: nc -z localhost 2181 || exit 1
-  #   test: ["CMD", "/opt/bitnami/kafka/bin/kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--list"]
-  #   interval: 10s
-  #   timeout: 5s
-  #   retries: 30
 services:
   prepare-data:
     image: 'docker.io/bitnami/os-shell:latest'
@@ -101,10 +93,14 @@ services:
   nginx:
     image: nginx:1.25.3
     # hostname: minio-proxy
+    container_name: proxy
     ports:
       - "80:80"
+    environment:
+      MINIO_MAIN_DOMAIN: ${minio_domain}
     volumes: 
-      - ./config/nginx.conf:/etc/nginx/conf.d/custom.conf:ro
+      # 这里会将环境变量替换掉，输出到 /etc/nginx/templates/minio_proxy.conf, 可以通过环境变量 NGINX_ENVSUBST_TEMPLATE_DIR, NGINX_ENVSUBST_TEMPLATE_SUFFIX, NGINX_ENVSUBST_OUTPUT_DIR 改变
+      - ./config/nginx.conf:/etc/nginx/templates/minio_proxy.conf.template:ro
     networks: 
       - minio-cluster
 
@@ -122,17 +118,6 @@ services:
       - 9090:9090
     networks: 
       - minio-cluster
-
-  # grafana:
-  #   image: grafana/grafana:10.0.10
-  #   hostname: grafana
-  #   container_name: grafana
-  #   ports:
-  #     - '3000:3000'
-  #   volumes:
-  #     - grafana_minio:/var/lib/grafana
-  #   networks: 
-  #     - minio-cluster
 
 networks:
   minio-cluster: 
@@ -216,5 +201,3 @@ volumes:
 
   prometheus_minio:
     driver: local
-  # grafana_minio:
-  #   driver: local
