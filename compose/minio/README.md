@@ -4,6 +4,9 @@
 1. 启动服务，访问 http://localhost:9001 ，
 2. 创建 Access Key
 
+### 部署问题
+1. 使用bitnami镜像 集群节点环境变量配置必须固定格式如: MINIO_DISTRIBUTED_NODES: minio{0...3}/data-{0...1}, 不能逐个列出节点和磁盘，不能使用 MINIO_VOLUMES 指定磁盘，否则能启动但是各个节点不能组成集群
+
 ## 客户端
 客户端mc可以连接多个服务端，默认预先配置了4组配置: gcs(google 存储), local(指定的minio),s3(亚马逊对象存储), play(minio官方提供的一个测试minio地址), 配置信息保存在 ~/.mc/config.json(bitnami容器没有用户目录放在/.mc/config.json), 可以直接修改该文件并挂载到容器，也可以通过命令修改其中的配置
 启动客户端
@@ -84,3 +87,9 @@ MINIO_PROMETHEUS_AUTH_TYPE: public
     }
     ```
     然后将策略授权给 user1 用户
+
+## 节点负载均衡
+部署nginx为节点做负载均衡
+### 问题
+1. 抄官方配置，导致502错误，原因是后算转发配置了https协议，应该更改为http协议，另外使用子域名比较简单，因为上下文会导致跳转错误。 
+2. 配置域名时配置了环境变量 MINIO_SERVER_URL 会导致无法登录， 原因暂时不明， 只要配置环境 MINIO_DOMAIN 和 MINIO_BROWSER_REDIRECT_URL 就可以登录并且通过api访问文件了。

@@ -17,6 +17,14 @@ x-minio: &minio_tmp
     # 这里只配置cluster的jobid
     MINIO_PROMETHEUS_JOB_ID: minio_cluster
     MINIO_PROMETHEUS_AUTH_TYPE: public
+
+    # 9000 端口的域名, 要配置nginx代理的域名, 之前配置主域名localhost 导致无法登录
+    MINIO_DOMAIN: api.localhost
+    # 配置了这个参数后就不能登录了，现在还不能确定原因
+    # MINIO_SERVER_URL: http://api.localhost
+    # 9001 端口的域名, 要配置nginx代理的域名，否则浏览器访问跳转到 minio的端口和上下文，而不是代理的端口和上下文
+    MINIO_BROWSER_REDIRECT_URL: http://console.localhost
+    
   depends_on:
     prepare-data:
       condition: service_completed_successfully
@@ -32,6 +40,7 @@ services:
   prepare-data:
     image: 'docker.io/bitnami/os-shell:latest'
     user: root
+    container_name: io-init
     # bitnami 镜像指定了用1001:root用户，需要更改，否则挂载的目录是属于root用户的，会导致没权限无法启动
     command:
       - /bin/bash
@@ -56,9 +65,9 @@ services:
     << : *minio_tmp
     hostname: minio0
     container_name: minio0
-    ports:
-      - "9000:9000"
-      - "9001:9001"
+    # ports:
+    #   - "9000:9000"
+    #   - "9001:9001"
     volumes: 
       - minio0:/bitnami/minio/data
       - minio00:/data-0
