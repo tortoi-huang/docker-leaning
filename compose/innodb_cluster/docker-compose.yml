@@ -46,18 +46,33 @@ services:
   #     - mysql-server-1
   #     - mysql-server-2
   #     - mysql-server-3
-  # mysql-router:
-  #   env_file:
-  #     - mysql-router.env
-  #   image: mysql/mysql-router:8.0
-  #   ports:
-  #     - "6446:6446"
-  #   depends_on:
-  #     - mysql-server-1
-  #     - mysql-server-2
-  #     - mysql-server-3
-  #     - mysql-shell
-  #   restart: on-failure
+  mysql-router:
+    image: mysql/mysql-router:8.0
+    hostname: mysql-router
+    ports:
+      # mysql R/W port
+      # - "6446:6446"
+      # mysql RO port
+      # - "6447:6447"
+      # mysql X R/W port
+      # - "6448:6448"
+      # mysql X RO port
+      # - "6449:6449"
+      # httr rest api
+      - "8443:8443"
+    environment:
+      # MYSQL_HOST: "mysql-server-1,mysql-server-2,mysql-server-3"
+      MYSQL_HOST: "mysql-server-1"
+      MYSQL_PORT: 3306
+      MYSQL_USER: root
+      MYSQL_PASSWORD: mysql
+      MYSQL_INNODB_NUM_MEMBERS: 3
+    depends_on:
+      - mysql-server-1
+      - mysql-server-2
+      - mysql-server-3
+      # - mysql-shell
+    restart: on-failure
   # dbwebapp:
   #   env_file:
   #     - dbwebapp.env
@@ -66,3 +81,12 @@ services:
   #     - "8080:8080"
   #   depends_on:
   #     - mysql-router
+
+  chat2db:
+    image: chat2db/chat2db:3.1.19
+    container_name: chat2db
+    volumes:
+      # - ~/.chat2db-docker:/root/.chat2db
+      - ./jdbc:/root/.chat2db/jdbc-lib
+    ports:
+      - "10824:10824"
