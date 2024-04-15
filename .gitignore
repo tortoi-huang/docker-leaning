@@ -55,3 +55,7 @@ compose/kafka_zk/data/*
 
 compose/hadoop/data
 compose/minio/data
+
+compose/mediawiki/conf/extensions/*
+simple/dockerweb/build/*
+docker/simple/dockerweb/build/*

@@ -1,0 +1,49 @@
+version: '3'
+services:
+  mediawiki:
+    image: bitnami/mediawiki:1.41.1
+    ports:
+      - 8080:8080
+    volumes:
+      - images:/bitnami/mariadb
+      # - ./conf/LocalSettings.php:/bitnami/mediawiki/LocalSettings.php
+      # - ./conf/extensions/Babel:/bitnami/mediawiki/extensions/Babel
+      # - ./conf/extensions/cldr:/bitnami/mediawiki/extensions/cldr
+      # - ./conf/extensions/CleanChanges:/bitnami/mediawiki/extensions/CleanChanges
+      # - ./conf/extensions/Translate:/bitnami/mediawiki/extensions/Translate
+      # - ./conf/extensions/UniversalLanguageSelector:/bitnami/mediawiki/extensions/UniversalLanguageSelector
+    environment:
+      # - ALLOW_EMPTY_PASSWORD=yes
+      - MEDIAWIKI_EXTERNAL_HTTP_PORT_NUMBER=8080
+      - MEDIAWIKI_USERNAME=user
+      - MEDIAWIKI_PASSWORD=bitnami123
+      - MEDIAWIKI_DATABASE_HOST=database
+      - MEDIAWIKI_DATABASE_USER=wikiuser
+      - MEDIAWIKI_DATABASE_PASSWORD=example
+      - MEDIAWIKI_DATABASE_NAME=my_wiki
+    networks: 
+      - wiki-net
+    depends_on:
+      - database
+  # This key also defines the name of the database host used during setup instead of the default "localhost"
+  database:
+    image: mariadb:11.3.2
+    restart: always
+    environment:
+      # @see https://phabricator.wikimedia.org/source/mediawiki/browse/master/includes/DefaultSettings.php
+      MYSQL_DATABASE: my_wiki
+      MYSQL_USER: wikiuser
+      MYSQL_PASSWORD: example
+      # MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
+      MARIADB_ROOT_PASSWORD: Mariadb123
+    volumes:
+      - db:/var/lib/mysql
+    networks: 
+      - wiki-net
+
+volumes:
+  images:
+  db:
+
+networks:
+  wiki-net: 
