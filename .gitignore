@@ -59,3 +59,7 @@ compose/minio/data
 compose/mediawiki/conf/extensions/*
 simple/dockerweb/build/*
 docker/simple/dockerweb/build/*
+
+
+compose/doris/image/*.gz
+compose/doris/image/apache-doris-2.1.2-bin-x64
