@@ -1,62 +1,49 @@
 version: "3.1" 
 
 services:
-  #这里配子一个zookeeper服务并声明为模板 zk-server
-  zoo1: &zk-server
-    image: zookeeper
+  doris-fe1: &fe-server
+    image: apache-doris:2.1.2-fe
     restart: always
-    hostname: zoo1
-    #ports:
-    #  - 2181:2181
+    hostname: fe1
+    # ports:
+    #   - 8030:8030
+    #   - 9010:9010
+    #   - 9020:9020
+    #   - 9030:9030
     environment:
-      ZOO_MY_ID: 1
-      ZOO_SERVERS: server.1=zoo1:2888:3888;2181 server.2=zoo2:2888:3888;2181 server.3=zoo3:2888:3888;2181
-      ZOO_LOG4J_PROP: INFO,ROLLINGFILE
-    volumes: 
-      - /tmp/docker/zookeeper/node1/logs:/logs
-      - /tmp/docker/zookeeper/node1/data:/data
-      - /tmp/docker/zookeeper/node1/datalog:/datalog
+      FE_SERVERS: 1
+      FE_ID: 1
+      # BROKER_ADDR: INFO,ROLLINGFILE
+    # volumes: 
+    #   - /tmp/docker/zookeeper/node1/logs:/logs
+    #   - /tmp/docker/zookeeper/node1/data:/data
+    #   - /tmp/docker/zookeeper/node1/datalog:/datalog
 
-  zoo2:
-    <<: *zk-server
-    hostname: zoo2
-    environment:
-      ZOO_MY_ID: 2
-    volumes: 
-      - /tmp/docker/zookeeper/node2/logs:/logs
-      - /tmp/docker/zookeeper/node2/data:/data
-      - /tmp/docker/zookeeper/node2/datalog:/datalog
+  # doris-fe2:
+  #   <<: *fe-server
+  #   hostname: fe2
+  #   environment:
+  #     ZOO_MY_ID: 2
+  #   volumes: 
+  #     - /tmp/docker/zookeeper/node2/logs:/logs
+  #     - /tmp/docker/zookeeper/node2/data:/data
+  #     - /tmp/docker/zookeeper/node2/datalog:/datalog
 
-  zoo3:
-    <<: *zk-server
-    hostname: zoo3
+
+  doris-be1: &be-server
+    image: apache-doris:2.1.2-be
+    restart: always
+    hostname: be1
+    # ports:
+    #   - 8060:8060
+    #   - 9040:9040
+    #   - 9050:9050
+    #   - 9060:9060
     environment:
-      ZOO_MY_ID: 3
-    volumes: 
-      - /tmp/docker/zookeeper/node3/logs:/logs
-      - /tmp/docker/zookeeper/node3/data:/data
-      - /tmp/docker/zookeeper/node3/datalog:/datalog
-  kfk1: &kfk-server
-    build: ./kafka_img
-    environment: 
-      BROKER_ID: 1
-      ZK: zoo1:2181,zoo2:2181,zoo3:2181
-    depends_on: 
-      - zoo1
-      - zoo2
-      - zoo3
-    image: kafkademo:latest
-    volumes: 
-      - /tmp/docker/kafkacluster/node1/kafka-logs:/tmp/kafka-logs
-  kfk2:
-    <<: *kfk-server
-    environment: 
-      BROKER_ID: 2
-    volumes: 
-      - /tmp/docker/kafkacluster/node2/kafka-logs:/tmp/kafka-logs
-  kfk3:
-    <<: *kfk-server
-    environment: 
-      BROKER_ID: 3
-    volumes: 
-      - /tmp/docker/kafkacluster/node3/kafka-logs:/tmp/kafka-logs
+      BE_ADDR: be1:9050
+      NODE_ROLE: computation
+      # BROKER_ADDR: INFO,ROLLINGFILE
+    # volumes: 
+    #   - /tmp/docker/zookeeper/node1/logs:/logs
+    #   - /tmp/docker/zookeeper/node1/data:/data
+    #   - /tmp/docker/zookeeper/node1/datalog:/datalog

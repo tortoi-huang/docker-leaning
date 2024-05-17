@@ -1,16 +1,21 @@
 # doris 研究
 
+
 ## fe
-doris fe是由java开发的 启动命令如下:
+doris fe是由java开发的, 容器启动脚本 init_fe.sh > start_fe.sh > java.
+其中:
+1. init_fe.sh 检查和初始化需要的环境变量
+
+2. start_fe.sh 设置 java classpath 以及java 启动命令行参数
+
+3. java 启动 doris-fe.jar 中的主类 org.apache.doris.DorisFE, 简化如下
 ```shell
 # 指定doris安装目录
 export DORIS_HOME=
 # 设定一个目录保存pid文件
 export PID_DIR=
-
 # 指向$DORIS_HOME/lib下的每一个jar文件, 这里很奇怪, 需要逐个指定每隔一个jar, 不能指定lib目录
-export CLASSPATH=...
-java org.apache.doris.DorisFE
+java -cp lib/*:lib/doris-fe.jar org.apache.doris.DorisFE
 ```
 
 ### 问题
@@ -31,9 +36,11 @@ java -cp lib/doris-fe.jar:lib/aaa.jar,bbb.jar org.apache.doris.DorisFE
 1. 指定目录
 > java -cp lib org.apache.doris.DorisFE
 > Error: Could not find or load main class org.apache.doris.DorisFE
+
 2. cp 没有单独指定 org.apache.doris.DorisFE 的jar包
 > java -cp lib/* org.apache.doris.DorisFE
 > Could not find or load main class lib.ST4-4.3.4.jar
+
 3. cp 通配符匹配部分文件
 > java -cp lib/doris-fe.jar:lib/*.jar org.apache.doris.DorisFE
 >  Unable to initialize main class org.apache.doris.DorisFE
