@@ -2,8 +2,7 @@ version: "3.1"
 
 services:
   doris-fe1: &fe-server
-    image: apache-doris:2.1.2-fe
-    restart: always
+    image: apache-doris-fe:2.1.2
     hostname: fe1
     # ports:
     #   - 8030:8030
@@ -11,13 +10,16 @@ services:
     #   - 9020:9020
     #   - 9030:9030
     environment:
-      FE_SERVERS: 1
+      # FE_SERVERS: 1
       FE_ID: 1
+      BUILD_TYPE: k8s
       # BROKER_ADDR: INFO,ROLLINGFILE
     # volumes: 
     #   - /tmp/docker/zookeeper/node1/logs:/logs
     #   - /tmp/docker/zookeeper/node1/data:/data
     #   - /tmp/docker/zookeeper/node1/datalog:/datalog
+    networks: 
+      - doris-net
 
   # doris-fe2:
   #   <<: *fe-server
@@ -31,19 +33,26 @@ services:
 
 
   doris-be1: &be-server
-    image: apache-doris:2.1.2-be
+    image: apache-doris-be:2.1.2
     restart: always
     hostname: be1
     # ports:
+    #   - 8040:8040
     #   - 8060:8060
-    #   - 9040:9040
     #   - 9050:9050
     #   - 9060:9060
     environment:
+      FE_SERVERS: fe1:fe1:9050
       BE_ADDR: be1:9050
-      NODE_ROLE: computation
+      # NODE_ROLE: computation
       # BROKER_ADDR: INFO,ROLLINGFILE
     # volumes: 
     #   - /tmp/docker/zookeeper/node1/logs:/logs
     #   - /tmp/docker/zookeeper/node1/data:/data
     #   - /tmp/docker/zookeeper/node1/datalog:/datalog
+    networks: 
+      - doris-net
+
+
+networks:
+  doris-net: 

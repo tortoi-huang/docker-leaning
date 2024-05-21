@@ -1,5 +1,6 @@
-FROM alpine as fetch
+FROM curlimages/curl as fetch
 
+USER root
 ARG doris_dir=/opt/apache-doris
 
 # 下载软件至镜像内，可根据需要替换
@@ -9,6 +10,7 @@ RUN mv /opt/apache-doris-2.1.2-bin-x64 ${doris_dir}
 ADD https://raw.githubusercontent.com/apache/doris/2.1.2-rc04/docker/runtime/fe/resource/init_fe.sh ${doris_dir}/fe/bin
 RUN chmod 755 ${doris_dir}/fe/bin/init_fe.sh
 WORKDIR ${doris_dir}
+RUN sed -i 's|start_fe.sh|/opt/apache-doris/fe/bin/start_fe.sh|g' /opt/apache-doris/fe/bin/init_fe.sh
 
 
 FROM openjdk:17-jdk-slim
@@ -20,4 +22,4 @@ ENV JAVA_OPTS_FOR_JDK_17="-XX:MaxRAMPercentage=70.0"
 COPY --from=fetch ${doris_dir} ${doris_dir}
 EXPOSE 8030 9020 9030 9010
 
-ENTRYPOINT ["fe/bin/init_fe.sh"]
+ENTRYPOINT ["/opt/apache-doris/fe/bin/init_fe.sh"]

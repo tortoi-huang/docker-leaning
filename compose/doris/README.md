@@ -1,5 +1,41 @@
 # doris 研究
 
+## 官网范例
+https://github.com/apache/doris/blob/master/docker/runtime/docker-compose-demo/build-cluster/docker-compose/3fe_3be/docker-compose.yaml
+启动后进入fe
+```shell
+sudo docker exec -it doris-fe-01 sh
+
+mysql -u root -P 9030 -h 172.20.80.2
+
+```
+```sql
+-- 显示fe状态
+show frontends;
+-- 显示be状态
+show backends;
+
+-- 创建表 
+CREATE TABLE session_data
+(
+    visitorid   SMALLINT,
+    sessionid   BIGINT,
+    visittime   DATETIME,
+    city        CHAR(20),
+    province    CHAR(20),
+    ip          varchar(32),
+    brower      CHAR(20),
+    url         VARCHAR(1024)
+)
+DUPLICATE KEY(visitorid, sessionid) -- 只用于指定排序列，相同的 KEY 行不会合并
+DISTRIBUTED BY HASH(sessionid, visitorid) BUCKETS 10;
+
+-- 插入数据
+insert into session_data(visittime) values('visittime2');
+```
+
+### 问题
+1. 往一个 DATETIME 列插入一个不能转换为日期的字符串 提示插入成功，实际插入失败
 
 ## fe
 doris fe是由java开发的, 容器启动脚本 init_fe.sh > start_fe.sh > java.
@@ -45,3 +81,8 @@ java -cp lib/doris-fe.jar:lib/aaa.jar,bbb.jar org.apache.doris.DorisFE
 > java -cp lib/doris-fe.jar:lib/*.jar org.apache.doris.DorisFE
 >  Unable to initialize main class org.apache.doris.DorisFE
 
+### 启动容器
+```shell
+sudo docker run -d --rm --env apache-doris-fe:2.1.2
+
+```
