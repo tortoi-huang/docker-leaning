@@ -36,6 +36,7 @@ insert into session_data(visittime) values('visittime2');
 
 ### 问题
 1. 往一个 DATETIME 列插入一个不能转换为日期的字符串 提示插入成功，实际插入失败
+2. 环境变量中的ip没有发现可以使用域名替换的方法
 
 ## fe
 doris fe是由java开发的, 容器启动脚本 init_fe.sh > start_fe.sh > java.
