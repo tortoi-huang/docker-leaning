@@ -6,7 +6,7 @@ ARG doris_dir=/opt/apache-doris
 # 下载软件至镜像内，可根据需要替换
 ADD https://apache-doris-releases.oss-accelerate.aliyuncs.com/apache-doris-2.1.2-bin-x64.tar.gz /opt/
 RUN tar -zxvf /opt/apache-doris-2.1.2-bin-x64.tar.gz -C /opt/
-RUN mv /opt/apache-doris-2.1.2-bin-x64 ${doris_dir}
+RUN mv /opt/apache-doris-2.1.2-bin-x64 ${doris_dir} && rm -rf ${doris_dir}/be ${doris_dir}/extensions 
 ADD https://raw.githubusercontent.com/apache/doris/2.1.2-rc04/docker/runtime/fe/resource/init_fe.sh ${doris_dir}/fe/bin
 RUN chmod 755 ${doris_dir}/fe/bin/init_fe.sh
 WORKDIR ${doris_dir}

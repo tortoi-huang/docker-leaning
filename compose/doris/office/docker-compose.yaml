@@ -19,7 +19,7 @@ version: '3'
 services:
   docker-fe-01: 
     << : *fe
-    container_name: "doris-fe-01"
+    container_name: "fe01"
     hostname: "fe-01"
     environment:
       << : *fe-env
@@ -36,7 +36,7 @@ services:
         ipv4_address: 172.20.80.2
   docker-fe-02: 
     << : *fe
-    container_name: "doris-fe-02"
+    container_name: "fe02"
     hostname: "fe-02"
     environment:
       << : *fe-env
@@ -53,7 +53,7 @@ services:
         ipv4_address: 172.20.80.3
   docker-fe-03: 
     << : *fe
-    container_name: "doris-fe-03"
+    container_name: "fe03"
     hostname: "fe-03"
     environment:
       << : *fe-env
@@ -70,7 +70,7 @@ services:
         ipv4_address: 172.20.80.4
   docker-be-01:
     << : *be
-    container_name: "doris-be-01"
+    container_name: "be01"
     hostname: "be-01"
     environment:
       << : *be-env
@@ -87,7 +87,7 @@ services:
         ipv4_address: 172.20.80.5
   docker-be-02:
     << : *be
-    container_name: "doris-be-02"
+    container_name: "be02"
     hostname: "be-02"
     environment:
       << : *be-env
@@ -104,7 +104,7 @@ services:
         ipv4_address: 172.20.80.6
   docker-be-03:
     << : *be
-    container_name: "doris-be-03"
+    container_name: "be03"
     hostname: "be-03"
     environment:
       << : *be-env
