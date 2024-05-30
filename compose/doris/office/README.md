@@ -28,6 +28,9 @@ show frontends;
 -- 显示be状态
 show backends;
 
+create database doris_test;
+use doris_test;
+
 -- 创建表 
 CREATE TABLE session_data
 (

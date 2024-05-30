@@ -11,6 +11,7 @@ ADD https://raw.githubusercontent.com/apache/doris/2.1.2-rc04/docker/runtime/be/
 RUN chmod 755 ${doris_dir}/be/bin/init_be.sh
 WORKDIR ${doris_dir}
 RUN sed -i 's|start_be.sh|/opt/apache-doris/be/bin/start_be.sh|g' /opt/apache-doris/be/bin/init_be.sh
+COPY ./healthcheck.sh ${doris_dir}/
 
 
 FROM openjdk:17-jdk-slim

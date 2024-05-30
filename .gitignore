@@ -64,4 +64,5 @@ docker/simple/dockerweb/build/*
 compose/doris/image/*.gz
 compose/doris/image/apache-doris-2.1.2-bin-x64
 compose/doris/office/data
+compose/doris/data
 compose/doris/img/temp

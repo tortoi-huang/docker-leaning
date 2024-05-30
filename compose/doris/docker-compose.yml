@@ -1,58 +1,142 @@
 version: "3.1" 
 
+x-fe: &fe
+  # image: apache-doris-fe:2.1.2
+  image: "apache/doris:2.0.0_alpha-fe-x86_64"
+  entrypoint: 
+    - java
+    - org.apache.doris.DorisFE
+  environment: &fe-e
+    CLASSPATH: /opt/apache-doris/fe/lib/doris-fe.jar:/opt/apache-doris/fe/lib/*:/opt/apache-doris/fe/lib
+    DORIS_HOME: /opt/apache-doris/fe
+    PID_DIR: /opt/apache-doris/fe/bin
+    DORIS_ROOT: /opt/apache-doris
+    FE_QUERY_PORT: 9030
+    HTTP_PORT: 8030
+    RPC_PORT: 9020
+    QUERY_PORT: 9030
+    EDIT_LOG_PORT: 9010
+    MYSQL_SERVICE_NIO_ENABLED: true
+    DORIS_LOG_TO_STDERR: 1
+    ENABLE_FQDN_MODE: true
+    JAVA_OPTS: -XX:MaxRAMPercentage=75.0
+  networks: 
+    doris-net:
+  healthcheck:
+    test: ["CMD", "/opt/apache-doris/healthcheck.sh", "9030"]
+    interval: 2s
+    timeout: 60s
+    retries: 20
+
+x-fe2: &fe-follower
+  << : *fe
+  command:
+    - --helper
+    - fe01:9010
+    # - 172.20.80.202:9010
+  depends_on:
+    doris-fe1:
+      condition: service_healthy
+    
+x-be: &be
+  image: apache-doris-be:2.1.2
+  networks: 
+    - doris-net
+
 services:
-  doris-fe1: &fe-server
-    image: apache-doris-fe:2.1.2
-    hostname: fe1
+  doris-fe1: 
+    << : *fe
+    container_name: "fe01"
+    hostname: fe01
     # ports:
     #   - 8030:8030
     #   - 9010:9010
     #   - 9020:9020
     #   - 9030:9030
+    # environment:
+    #   << : *fe
+    #   FE_SERVERS: 1
+    #   FE_ID: 1
+    #   BUILD_TYPE: k8s
+    #   BROKER_ADDR: INFO,ROLLINGFILE
+    volumes: 
+      - ./conf/fe.conf:/opt/apache-doris/fe/conf/fe.conf:ro
+      - ./conf/healthcheck.sh:/opt/apache-doris/healthcheck.sh
+      - ./data/fe-01/doris-meta:/opt/apache-doris/fe/doris-meta
+      - ./data/fe-01/log:/opt/apache-doris/fe/log
+    # networks:
+    #   doris-net:
+    #     ipv4_address: 172.20.80.202
+
+  doris-fe2: 
+    << : *fe-follower
+    container_name: "fe02"
+    hostname: fe02
+    volumes: 
+      - ./conf/fe.conf:/opt/apache-doris/fe/conf/fe.conf:ro
+      - ./conf/healthcheck.sh:/opt/apache-doris/healthcheck.sh
+      - ./data/fe-02/doris-meta:/opt/apache-doris/fe/doris-meta
+      - ./data/fe-02/log:/opt/apache-doris/fe/log
+    # networks:
+    #   doris-net:
+    #     ipv4_address: 172.20.80.203
+
+  doris-fe3: 
+    << : *fe-follower
+    container_name: "fe03"
+    hostname: fe03
+    volumes: 
+      - ./conf/fe.conf:/opt/apache-doris/fe/conf/fe.conf:ro
+      - ./conf/healthcheck.sh:/opt/apache-doris/healthcheck.sh
+      - ./data/fe-03/doris-meta:/opt/apache-doris/fe/doris-meta
+      - ./data/fe-03/log:/opt/apache-doris/fe/log
+    # networks:
+    #   doris-net:
+    #     ipv4_address: 172.20.80.204
+
+  # doris-be1: 
+  #   << : *be
+  #   container_name: "be01"
+  #   hostname: be01
+  #   # ports:
+  #   #   - 8040:8040
+  #   #   - 8060:8060
+  #   #   - 9050:9050
+  #   #   - 9060:9060
+  #   # environment:
+  #   #   FE_SERVERS: fe1:fe1:9050
+  #   #   BE_ADDR: be1:9050
+  #     # NODE_ROLE: computation
+  #     # BROKER_ADDR: INFO,ROLLINGFILE
+  #   # volumes: 
+  #   #   - /tmp/docker/zookeeper/node1/logs:/logs
+  #   #   - /tmp/docker/zookeeper/node1/data:/data
+  #   #   - /tmp/docker/zookeeper/node1/datalog:/datalog
+
+  init-c:
+    image: mysql:8.4.0
+    container_name: "init"
+    entrypoint:
+      - bash
+      - -x
+      - /opt/apache-doris/init/init.sh
     environment:
-      # FE_SERVERS: 1
-      FE_ID: 1
-      BUILD_TYPE: k8s
-      # BROKER_ADDR: INFO,ROLLINGFILE
-    # volumes: 
-    #   - /tmp/docker/zookeeper/node1/logs:/logs
-    #   - /tmp/docker/zookeeper/node1/data:/data
-    #   - /tmp/docker/zookeeper/node1/datalog:/datalog
-    networks: 
-      - doris-net
-
-  # doris-fe2:
-  #   <<: *fe-server
-  #   hostname: fe2
-  #   environment:
-  #     ZOO_MY_ID: 2
-  #   volumes: 
-  #     - /tmp/docker/zookeeper/node2/logs:/logs
-  #     - /tmp/docker/zookeeper/node2/data:/data
-  #     - /tmp/docker/zookeeper/node2/datalog:/datalog
-
-
-  doris-be1: &be-server
-    image: apache-doris-be:2.1.2
-    restart: always
-    hostname: be1
-    # ports:
-    #   - 8040:8040
-    #   - 8060:8060
-    #   - 9050:9050
-    #   - 9060:9060
-    environment:
-      FE_SERVERS: fe1:fe1:9050
-      BE_ADDR: be1:9050
-      # NODE_ROLE: computation
-      # BROKER_ADDR: INFO,ROLLINGFILE
-    # volumes: 
-    #   - /tmp/docker/zookeeper/node1/logs:/logs
-    #   - /tmp/docker/zookeeper/node1/data:/data
-    #   - /tmp/docker/zookeeper/node1/datalog:/datalog
-    networks: 
-      - doris-net
-
+      FE_MASTER: fe-01:9010
+      FE_FOLLOWER: fe-02:9010,fe-03:9010
+      BE_SERVERS: be-01:9050,be-02:9050,be3:fe-03:9050
+    volumes: 
+      - ./conf/init/init.sh:/opt/apache-doris/init/init.sh
+    depends_on:
+      doris-fe2:
+        condition: service_healthy
+      doris-fe3:
+        condition: service_healthy
+    networks:
+      doris-net:
+        # ipv4_address: 172.20.80.222
 
 networks:
   doris-net: 
+    ipam:
+      config:
+        - subnet: 172.20.80.0/24

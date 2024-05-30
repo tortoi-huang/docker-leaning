@@ -1,5 +1,9 @@
 x-fe: &fe
   image: "apache/doris:2.0.0_alpha-fe-x86_64"
+  entrypoint: 
+    - bash
+    - -x
+    - /opt/apache-doris/fe/bin/init_fe.sh
   environment: &fe-env
     FE_SERVERS: fe1:172.20.80.2:9010,fe2:172.20.80.3:9010,fe3:172.20.80.4:9010
     # FE_SERVERS: fe1:fe-01:9010,fe2:fe-02:9010,fe3:fe-03:9010
@@ -68,6 +72,7 @@ services:
     networks:
       doris_net:
         ipv4_address: 172.20.80.4
+
   docker-be-01:
     << : *be
     container_name: "be01"
@@ -82,6 +87,7 @@ services:
       - ./data/be-01/storage:/opt/apache-doris/be/storage
       - ./data/be-01/script:/docker-entrypoint-initdb.d
       - ./data/be-01/log:/opt/apache-doris/be/log
+      # - ./conf/be.conf:/opt/apache-doris/fe/conf/be.conf:ro
     networks:
       doris_net:
         ipv4_address: 172.20.80.5
@@ -99,6 +105,7 @@ services:
       - ./data/be-02/storage:/opt/apache-doris/be/storage
       - ./data/be-02/script:/docker-entrypoint-initdb.d
       - ./data/be-02/log:/opt/apache-doris/be/log
+      # - ./conf/be.conf:/opt/apache-doris/fe/conf/be.conf:ro
     networks:
       doris_net:
         ipv4_address: 172.20.80.6
@@ -116,6 +123,7 @@ services:
       - ./data/be-03/storage:/opt/apache-doris/be/storage
       - ./data/be-03/script:/docker-entrypoint-initdb.d
       - ./data/be-03/log:/opt/apache-doris/be/log
+      # - ./conf/be.conf:/opt/apache-doris/fe/conf/be.conf:ro
     networks:
       doris_net:
         ipv4_address: 172.20.80.7
