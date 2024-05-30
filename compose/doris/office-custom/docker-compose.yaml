@@ -1,0 +1,145 @@
+x-fe: &fe
+  image: "apache/doris:2.0.0_alpha-fe-x86_64"
+  entrypoint: 
+    - bash
+    - -x
+    - /opt/apache-doris/fe/bin/init_fe.sh
+  environment: &fe-env
+    FE_SERVERS: fe1:172.20.80.2:9010,fe2:172.20.80.3:9010,fe3:172.20.80.4:9010
+    # FE_SERVERS: fe1:fe-01:9010,fe2:fe-02:9010,fe3:fe-03:9010
+  healthcheck:
+    test: ["CMD", "/opt/apache-doris/healthcheck.sh", "9030"]
+    interval: 2s
+    timeout: 60s
+    retries: 20
+x-be: &be
+  image: "apache/doris:2.0.0_alpha-be-x86_64"
+  environment: &be-env
+    FE_SERVERS: fe1:172.20.80.2:9010,fe2:172.20.80.3:9010,fe3:172.20.80.4:9010
+    # FE_SERVERS: fe1:fe-01:9010,fe2:fe-02:9010,fe3:fe-03:9010
+  depends_on:
+    docker-fe-01: 
+      condition: service_healthy
+    docker-fe-02:
+      condition: service_healthy
+    docker-fe-03:
+      condition: service_healthy
+    # - docker-fe-01
+    # - docker-fe-02
+    # - docker-fe-03
+
+version: '3'
+services:
+  docker-fe-01: 
+    << : *fe
+    container_name: "fe01"
+    hostname: "fe-01"
+    environment:
+      << : *fe-env
+      FE_ID: 1
+    volumes:
+      - ./data/fe-01/doris-meta:/opt/apache-doris/fe/doris-meta
+      - ./data/fe-01/log:/opt/apache-doris/fe/log
+      - ./conf/fe.conf:/opt/apache-doris/fe/conf/fe.conf:ro
+      - ./conf/healthcheck.sh:/opt/apache-doris/healthcheck.sh
+    networks:
+      doris_net:
+        ipv4_address: 172.20.80.2
+
+  docker-fe-02: 
+    << : *fe
+    container_name: "fe02"
+    hostname: "fe-02"
+    environment:
+      << : *fe-env
+      FE_ID: 2
+    volumes:
+      - ./data/fe-02/doris-meta:/opt/apache-doris/fe/doris-meta
+      - ./data/fe-02/log:/opt/apache-doris/fe/log
+      - ./conf/fe.conf:/opt/apache-doris/fe/conf/fe.conf:ro
+      - ./conf/healthcheck.sh:/opt/apache-doris/healthcheck.sh
+    networks:
+      doris_net:
+        ipv4_address: 172.20.80.3
+    depends_on:
+      docker-fe-01: 
+        condition: service_healthy
+
+  docker-fe-03: 
+    << : *fe
+    container_name: "fe03"
+    hostname: "fe-03"
+    environment:
+      << : *fe-env
+      FE_ID: 3
+    volumes:
+      - ./data/fe-03/doris-meta:/opt/apache-doris/fe/doris-meta
+      - ./data/fe-03/log:/opt/apache-doris/fe/log
+      - ./conf/fe.conf:/opt/apache-doris/fe/conf/fe.conf:ro
+      - ./conf/healthcheck.sh:/opt/apache-doris/healthcheck.sh
+    networks:
+      doris_net:
+        ipv4_address: 172.20.80.4
+    depends_on:
+      docker-fe-01: 
+        condition: service_healthy
+
+  docker-be-01:
+    << : *be
+    container_name: "be01"
+    hostname: "be-01"
+    environment:
+      << : *be-env
+      BE_ADDR: 172.20.80.5:9050
+      # BE_ADDR: be-01:9050
+    # ports:
+    #   - 8041:8040
+    volumes:
+      - ./data/be-01/storage:/opt/apache-doris/be/storage
+      - ./data/be-01/script:/docker-entrypoint-initdb.d
+      - ./data/be-01/log:/opt/apache-doris/be/log
+      # - ./conf/be.conf:/opt/apache-doris/fe/conf/be.conf:ro
+    networks:
+      doris_net:
+        ipv4_address: 172.20.80.5
+  docker-be-02:
+    << : *be
+    container_name: "be02"
+    hostname: "be-02"
+    environment:
+      << : *be-env
+      BE_ADDR: 172.20.80.6:9050
+      # - BE_ADDR=be-02:9050
+    # ports:
+    #   - 8042:8040
+    volumes:
+      - ./data/be-02/storage:/opt/apache-doris/be/storage
+      - ./data/be-02/script:/docker-entrypoint-initdb.d
+      - ./data/be-02/log:/opt/apache-doris/be/log
+      # - ./conf/be.conf:/opt/apache-doris/fe/conf/be.conf:ro
+    networks:
+      doris_net:
+        ipv4_address: 172.20.80.6
+  docker-be-03:
+    << : *be
+    container_name: "be03"
+    hostname: "be-03"
+    environment:
+      << : *be-env
+      BE_ADDR: 172.20.80.7:9050
+      # - BE_ADDR=be-03:9050
+    # ports:
+    #   - 8043:8040
+    volumes:
+      - ./data/be-03/storage:/opt/apache-doris/be/storage
+      - ./data/be-03/script:/docker-entrypoint-initdb.d
+      - ./data/be-03/log:/opt/apache-doris/be/log
+      # - ./conf/be.conf:/opt/apache-doris/fe/conf/be.conf:ro
+    networks:
+      doris_net:
+        ipv4_address: 172.20.80.7
+networks:
+  doris_net:
+    ipam:
+      config:
+        - subnet: 172.20.80.0/24
