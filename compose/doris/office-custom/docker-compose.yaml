@@ -3,7 +3,7 @@ x-fe: &fe
   entrypoint: 
     - bash
     - -x
-    - /opt/apache-doris/fe/bin/init_fe.sh
+    - /opt/apache-doris/fe/bin/start_fe.sh
   environment: &fe-env
     FE_SERVERS: fe1:172.20.80.2:9010,fe2:172.20.80.3:9010,fe3:172.20.80.4:9010
     # FE_SERVERS: fe1:fe-01:9010,fe2:fe-02:9010,fe3:fe-03:9010
@@ -17,13 +17,19 @@ x-be: &be
   environment: &be-env
     FE_SERVERS: fe1:172.20.80.2:9010,fe2:172.20.80.3:9010,fe3:172.20.80.4:9010
     # FE_SERVERS: fe1:fe-01:9010,fe2:fe-02:9010,fe3:fe-03:9010
+  healthcheck:
+    test: ["CMD", "ls", "/opt/apache-doris/be/bin/be.pid"]
+    interval: 2s
+    timeout: 60s
+    retries: 20
   depends_on:
     docker-fe-01: 
       condition: service_healthy
-    docker-fe-02:
-      condition: service_healthy
-    docker-fe-03:
-      condition: service_healthy
+    # docker-fe-02:
+    #   condition: service_healthy
+    # docker-fe-03:
+    #   condition: service_healthy
+
     # - docker-fe-01
     # - docker-fe-02
     # - docker-fe-03
@@ -50,6 +56,9 @@ services:
     << : *fe
     container_name: "fe02"
     hostname: "fe-02"
+    command: 
+      - --helper
+      - 172.20.80.2:9010
     environment:
       << : *fe-env
       FE_ID: 2
@@ -61,6 +70,11 @@ services:
     networks:
       doris_net:
         ipv4_address: 172.20.80.3
+    healthcheck:
+      test: ["CMD", "ls", "/opt/apache-doris/fe/bin/fe.pid"]
+      interval: 2s
+      timeout: 60s
+      retries: 20
     depends_on:
       docker-fe-01: 
         condition: service_healthy
@@ -69,6 +83,9 @@ services:
     << : *fe
     container_name: "fe03"
     hostname: "fe-03"
+    command: 
+      - --helper
+      - 172.20.80.2:9010
     environment:
       << : *fe-env
       FE_ID: 3
@@ -80,6 +97,11 @@ services:
     networks:
       doris_net:
         ipv4_address: 172.20.80.4
+    healthcheck:
+      test: ["CMD", "ls", "/opt/apache-doris/fe/bin/fe.pid"]
+      interval: 2s
+      timeout: 60s
+      retries: 20
     depends_on:
       docker-fe-01: 
         condition: service_healthy
@@ -138,6 +160,36 @@ services:
     networks:
       doris_net:
         ipv4_address: 172.20.80.7
+
+
+  init-c:
+    image: mysql:8.4.0
+    container_name: "init"
+    entrypoint:
+      - bash
+      - -x
+      - /opt/apache-doris/init/init.sh
+    environment:
+      FE_MASTER: fe-01:9010
+      FE_FOLLOWER: fe-02:9010,fe-03:9010
+      BE_SERVERS: be-01:9050,be-02:9050,be3:fe-03:9050
+    volumes: 
+      - ./conf/init/init.sh:/opt/apache-doris/init/init.sh
+    depends_on:
+      docker-fe-02:
+        condition: service_healthy
+      docker-fe-03:
+        condition: service_healthy
+      docker-be-01:
+        condition: service_healthy
+      docker-be-02:
+        condition: service_healthy
+      docker-be-03:
+        condition: service_healthy
+    networks:
+      doris_net:
+        ipv4_address: 172.20.80.222
+
 networks:
   doris_net:
     ipam:
