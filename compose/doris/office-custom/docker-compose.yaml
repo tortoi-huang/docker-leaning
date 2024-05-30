@@ -4,8 +4,8 @@ x-fe: &fe
     - bash
     - -x
     - /opt/apache-doris/fe/bin/start_fe.sh
-  environment: &fe-env
-    FE_SERVERS: fe1:172.20.80.2:9010,fe2:172.20.80.3:9010,fe3:172.20.80.4:9010
+  # environment: &fe-env
+  #   FE_SERVERS: fe1:172.20.80.2:9010,fe2:172.20.80.3:9010,fe3:172.20.80.4:9010
     # FE_SERVERS: fe1:fe-01:9010,fe2:fe-02:9010,fe3:fe-03:9010
   healthcheck:
     test: ["CMD", "/opt/apache-doris/healthcheck.sh", "9030"]
@@ -40,9 +40,9 @@ services:
     << : *fe
     container_name: "fe01"
     hostname: "fe-01"
-    environment:
-      << : *fe-env
-      FE_ID: 1
+    # environment:
+    #   << : *fe-env
+    #   FE_ID: 1
     volumes:
       - ./data/fe-01/doris-meta:/opt/apache-doris/fe/doris-meta
       - ./data/fe-01/log:/opt/apache-doris/fe/log
@@ -59,9 +59,9 @@ services:
     command: 
       - --helper
       - 172.20.80.2:9010
-    environment:
-      << : *fe-env
-      FE_ID: 2
+    # environment:
+    #   << : *fe-env
+    #   FE_ID: 2
     volumes:
       - ./data/fe-02/doris-meta:/opt/apache-doris/fe/doris-meta
       - ./data/fe-02/log:/opt/apache-doris/fe/log
@@ -86,9 +86,9 @@ services:
     command: 
       - --helper
       - 172.20.80.2:9010
-    environment:
-      << : *fe-env
-      FE_ID: 3
+    # environment:
+    #   << : *fe-env
+    #   FE_ID: 3
     volumes:
       - ./data/fe-03/doris-meta:/opt/apache-doris/fe/doris-meta
       - ./data/fe-03/log:/opt/apache-doris/fe/log
