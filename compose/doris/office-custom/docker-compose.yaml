@@ -42,7 +42,7 @@ services:
       - ./conf/healthcheck.sh:/opt/apache-doris/healthcheck.sh
     networks:
       doris_net:
-        ipv4_address: 172.20.80.2
+        # ipv4_address: 172.20.80.2
 
   docker-fe-02: 
     << : *fe
@@ -50,8 +50,8 @@ services:
     hostname: "fe02"
     command: 
       - --helper
-      - 172.20.80.2:9010
-      # - fe01:9010
+      # - 172.20.80.2:9010
+      - fe01:9010
     volumes:
       - ./data/fe-02/doris-meta:/opt/apache-doris/fe/doris-meta
       - ./data/fe-02/log:/opt/apache-doris/fe/log
@@ -59,7 +59,7 @@ services:
       - ./conf/healthcheck.sh:/opt/apache-doris/healthcheck.sh
     networks:
       doris_net:
-        ipv4_address: 172.20.80.3
+        # ipv4_address: 172.20.80.3
     healthcheck:
       test: ["CMD", "ls", "/opt/apache-doris/fe/bin/fe.pid"]
       interval: 2s
@@ -75,8 +75,8 @@ services:
     hostname: "fe03"
     command: 
       - --helper
-      - 172.20.80.2:9010
-      # - fe02:9010
+      # - 172.20.80.2:9010
+      - fe01:9010
     volumes:
       - ./data/fe-03/doris-meta:/opt/apache-doris/fe/doris-meta
       - ./data/fe-03/log:/opt/apache-doris/fe/log
@@ -84,7 +84,7 @@ services:
       - ./conf/healthcheck.sh:/opt/apache-doris/healthcheck.sh
     networks:
       doris_net:
-        ipv4_address: 172.20.80.4
+        # ipv4_address: 172.20.80.4
     healthcheck:
       test: ["CMD", "ls", "/opt/apache-doris/fe/bin/fe.pid"]
       interval: 2s
@@ -100,8 +100,8 @@ services:
     hostname: "be01"
     environment:
       # << : *be-env
-      BE_ADDR: 172.20.80.5:9050
-      # BE_ADDR: be01:9050
+      # BE_ADDR: 172.20.80.5:9050
+      BE_ADDR: be01:9050
     volumes:
       - ./data/be-01/storage:/opt/apache-doris/be/storage
       - ./data/be-01/script:/docker-entrypoint-initdb.d
@@ -109,15 +109,15 @@ services:
       # - ./conf/be.conf:/opt/apache-doris/fe/conf/be.conf:ro
     networks:
       doris_net:
-        ipv4_address: 172.20.80.5
+        # ipv4_address: 172.20.80.5
   docker-be-02:
     << : *be
     container_name: "be02"
     hostname: "be02"
     environment:
       # << : *be-env
-      BE_ADDR: 172.20.80.6:9050
-      # BE_ADDR: be02:9050
+      # BE_ADDR: 172.20.80.6:9050
+      BE_ADDR: be02:9050
     volumes:
       - ./data/be-02/storage:/opt/apache-doris/be/storage
       - ./data/be-02/script:/docker-entrypoint-initdb.d
@@ -125,15 +125,15 @@ services:
       # - ./conf/be.conf:/opt/apache-doris/fe/conf/be.conf:ro
     networks:
       doris_net:
-        ipv4_address: 172.20.80.6
+        # ipv4_address: 172.20.80.6
   docker-be-03:
     << : *be
     container_name: "be03"
     hostname: "be03"
     environment:
       # << : *be-env
-      BE_ADDR: 172.20.80.7:9050
-      # BE_ADDR: be03:9050
+      # BE_ADDR: 172.20.80.7:9050
+      BE_ADDR: be03:9050
     volumes:
       - ./data/be-03/storage:/opt/apache-doris/be/storage
       - ./data/be-03/script:/docker-entrypoint-initdb.d
@@ -141,7 +141,7 @@ services:
       # - ./conf/be.conf:/opt/apache-doris/fe/conf/be.conf:ro
     networks:
       doris_net:
-        ipv4_address: 172.20.80.7
+        # ipv4_address: 172.20.80.7
 
 
   init-c:
@@ -166,10 +166,10 @@ services:
         condition: service_healthy
     networks:
       doris_net:
-        ipv4_address: 172.20.80.222
+        # ipv4_address: 172.20.80.222
 
 networks:
   doris_net:
-    ipam:
-      config:
-        - subnet: 172.20.80.0/24
+    # ipam:
+    #   config:
+    #     - subnet: 172.20.80.0/24
