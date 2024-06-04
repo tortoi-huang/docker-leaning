@@ -1,12 +1,14 @@
 # doris 研究
 
 集群首次启动顺序
+执行 docker compose -f init-compose.yaml up -d
 1. 启动master, 因为 新的follower启动必须通过helper参数指定 master
 2. 启动 follower 命令行附带 helper 参数指向master
 3. 启动 be 
 4. 启动初始化集群容器, 实测如果fe还没启动完成可能会导致fe连接不到be，并且无法自动恢复
 
 集群非首次启动顺序
+执行 docker compose up -d
 1. 启动 fe, 所有fe一起启动, 并且不能附带命令行 helper 参数, 因为不知道哪个fe是master
 2. 启动 be
 
