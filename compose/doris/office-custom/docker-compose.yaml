@@ -9,10 +9,16 @@ x-fe: &fe
     interval: 2s
     timeout: 60s
     retries: 20
+
 x-be: &be
   image: "apache/doris:2.0.0_alpha-be-x86_64"
-  environment: &be-env
-    FE_SERVERS: fe1:172.20.80.2:9010,fe2:172.20.80.3:9010,fe3:172.20.80.4:9010
+  entrypoint: 
+    - bash
+    - -x
+    - /opt/apache-doris/be/bin/start_be.sh
+  # environment: &be-env
+    # FE_SERVERS 参数不再需要，在init.sh中已经有该参数
+    # FE_SERVERS: fe1:172.20.80.2:9010,fe2:172.20.80.3:9010,fe3:172.20.80.4:9010
     # FE_SERVERS: fe1:fe01:9010,fe2:fe02:9010,fe3:fe03:9010
   healthcheck:
     test: ["CMD", "ls", "/opt/apache-doris/be/bin/be.pid"]
@@ -93,7 +99,7 @@ services:
     container_name: "be01"
     hostname: "be01"
     environment:
-      << : *be-env
+      # << : *be-env
       BE_ADDR: 172.20.80.5:9050
       # BE_ADDR: be01:9050
     volumes:
@@ -109,7 +115,7 @@ services:
     container_name: "be02"
     hostname: "be02"
     environment:
-      << : *be-env
+      # << : *be-env
       BE_ADDR: 172.20.80.6:9050
       # BE_ADDR: be02:9050
     volumes:
@@ -125,7 +131,7 @@ services:
     container_name: "be03"
     hostname: "be03"
     environment:
-      << : *be-env
+      # << : *be-env
       BE_ADDR: 172.20.80.7:9050
       # BE_ADDR: be03:9050
     volumes:
