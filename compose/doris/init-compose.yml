@@ -1,4 +1,4 @@
-version: "3.1" 
+version: "3.8" 
 
 x-fe: &fe
   build: img/fe
@@ -170,3 +170,68 @@ services:
 
 networks:
   doris-net: 
+
+---
+version: "3.8" 
+
+services:
+  doris-fe1: 
+    extends: 
+      file: docker-compose-base.yml
+      service: doris-fe1
+
+  doris-fe2:  
+    extends: 
+      file: docker-compose-base.yml
+      service: doris-fe2
+    command:
+      # - --helper
+      - -helper
+      - fe01:9010
+    depends_on:
+      doris-fe1: 
+        condition: service_healthy
+
+  doris-fe3:  
+    extends: 
+      file: docker-compose-base.yml
+      service: doris-fe3
+    command:
+      # - --helper
+      - -helper
+      - fe01:9010
+    depends_on:
+      doris-fe1: 
+        condition: service_healthy
+
+  doris-be1: 
+    extends: 
+      file: docker-compose-base.yml
+      service: doris-be1
+    depends_on:
+      doris-fe1: 
+        condition: service_healthy
+
+  doris-be2: 
+    extends: 
+      file: docker-compose-base.yml
+      service: doris-be2
+    depends_on:
+      doris-fe1: 
+        condition: service_healthy
+
+  doris-be3: 
+    extends: 
+      file: docker-compose-base.yml
+      service: doris-be3
+    depends_on:
+      doris-fe1: 
+        condition: service_healthy
+
+  init-c:
+    extends: 
+      file: docker-compose-base.yml
+      service: init-c
+
+# networks:
+#   doris-net: 

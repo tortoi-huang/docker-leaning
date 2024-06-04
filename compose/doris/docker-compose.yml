@@ -1,172 +1,35 @@
-version: "3.1" 
-
-x-fe: &fe
-  build: img/fe
-  image: apache-doris-fe:2.1.2
-  # image: "apache/doris:2.0.0_alpha-fe-x86_64"
-  entrypoint: 
-    - java
-    - org.apache.doris.DorisFE
-    # - /opt/apache-doris/fe/bin/start_fe.sh
-  environment: &fe-e
-    CLASSPATH: /opt/apache-doris/fe/lib/doris-fe.jar:/opt/apache-doris/fe/lib/*:/opt/apache-doris/fe/lib
-    DORIS_HOME: /opt/apache-doris/fe
-    PID_DIR: /opt/apache-doris/fe/bin
-    DORIS_ROOT: /opt/apache-doris
-    FE_QUERY_PORT: 9030
-    HTTP_PORT: 8030
-    RPC_PORT: 9020
-    QUERY_PORT: 9030
-    EDIT_LOG_PORT: 9010
-    MYSQL_SERVICE_NIO_ENABLED: true
-    DORIS_LOG_TO_STDERR: 1
-    ENABLE_FQDN_MODE: true
-    JAVA_OPTS: -XX:MaxRAMPercentage=75.0
-    # JAVA_OPTS: -Xmx1024m
-  networks: 
-    doris-net:
-  healthcheck:
-    test: ["CMD", "/opt/apache-doris/healthcheck.sh", "9030"]
-    interval: 2s
-    timeout: 60s
-    retries: 20
-
-x-fe2: &fe-follower
-  << : *fe
-  command:
-    # - --helper
-    - -helper
-    - fe01:9010
-  healthcheck:
-    test: ["CMD", "ls", "/opt/apache-doris/fe/bin/fe.pid"]
-    interval: 2s
-    timeout: 60s
-    retries: 20
-  depends_on:
-    doris-fe1:
-      condition: service_healthy
-    
-x-be: &be
-  build: img/be
-  image: apache-doris-be:2.1.2
-  # image: "apache/doris:2.0.0_alpha-be-x86_64"
-  entrypoint: 
-    - bash
-    - -x
-    - /opt/apache-doris/be/bin/start_be.sh
-    - --console
-  healthcheck:
-    # test: ["CMD", "ls", "/opt/apache-doris/be/bin/be.pid"]
-    test: ["CMD", "/opt/apache-doris/healthcheck.sh", "9050"]
-    interval: 2s
-    timeout: 60s
-    retries: 20
-  depends_on:
-    doris-fe1: 
-      condition: service_healthy
-  networks: 
-    doris-net:
-  ulimits:
-    nofile:
-      soft: 65536
-      hard: 65536
+version: "3.8" 
 
 services:
   doris-fe1: 
-    << : *fe
-    container_name: "fe01"
-    hostname: fe01
-    volumes: 
-      - ./conf/fe.conf:/opt/apache-doris/fe/conf/fe.conf:ro
-      - ./conf/healthcheck.sh:/opt/apache-doris/healthcheck.sh
-      - ./data/fe-01/doris-meta:/opt/apache-doris/fe/doris-meta
-      - ./data/fe-01/log:/opt/apache-doris/fe/log
+    extends: 
+      file: docker-compose-base.yml
+      service: doris-fe1
 
-  doris-fe2: 
-    << : *fe-follower
-    container_name: "fe02"
-    hostname: fe02
-    volumes: 
-      - ./conf/fe.conf:/opt/apache-doris/fe/conf/fe.conf:ro
-      - ./conf/healthcheck.sh:/opt/apache-doris/healthcheck.sh
-      - ./data/fe-02/doris-meta:/opt/apache-doris/fe/doris-meta
-      - ./data/fe-02/log:/opt/apache-doris/fe/log
+  doris-fe2:  
+    extends: 
+      file: docker-compose-base.yml
+      service: doris-fe2
 
-  doris-fe3: 
-    << : *fe-follower
-    container_name: "fe03"
-    hostname: fe03
-    volumes: 
-      - ./conf/fe.conf:/opt/apache-doris/fe/conf/fe.conf:ro
-      - ./conf/healthcheck.sh:/opt/apache-doris/healthcheck.sh
-      - ./data/fe-03/doris-meta:/opt/apache-doris/fe/doris-meta
-      - ./data/fe-03/log:/opt/apache-doris/fe/log
+  doris-fe3:  
+    extends: 
+      file: docker-compose-base.yml
+      service: doris-fe3
 
   doris-be1: 
-    << : *be
-    container_name: "be01"
-    hostname: be01
-    environment:
-      BE_ADDR: be01:9050
-    volumes: 
-      - ./data/be-01/storage:/opt/apache-doris/be/storage
-      - ./data/be-01/script:/docker-entrypoint-initdb.d
-      - ./data/be-01/log:/opt/apache-doris/be/log
-      - ./conf/healthcheck.sh:/opt/apache-doris/healthcheck.sh
+    extends: 
+      file: docker-compose-base.yml
+      service: doris-be1
 
   doris-be2: 
-    << : *be
-    container_name: "be02"
-    hostname: be02
-    environment:
-      BE_ADDR: be02:9050
-    volumes: 
-      - ./data/be-02/storage:/opt/apache-doris/be/storage
-      - ./data/be-02/script:/docker-entrypoint-initdb.d
-      - ./data/be-02/log:/opt/apache-doris/be/log
-      - ./conf/healthcheck.sh:/opt/apache-doris/healthcheck.sh
+    extends: 
+      file: docker-compose-base.yml
+      service: doris-be2
 
   doris-be3: 
-    << : *be
-    container_name: "be03"
-    hostname: be03
-    environment:
-      BE_ADDR: be03:9050
-    volumes: 
-      - ./data/be-03/storage:/opt/apache-doris/be/storage
-      - ./data/be-03/script:/docker-entrypoint-initdb.d
-      - ./data/be-03/log:/opt/apache-doris/be/log
-      - ./conf/healthcheck.sh:/opt/apache-doris/healthcheck.sh
-
-  init-c:
-    image: mysql:8.4.0
-    container_name: "init"
-    entrypoint:
-      - bash
-      - -x
-      - /opt/apache-doris/init/init.sh
-    environment:
-      FE_SERVERS: fe01,fe02,fe03
-      BE_SERVERS: be01,be02,be03
-      OB_SERVERS: 
-      EDIT_LOG_PORT: 9010
-      QUERY_PORT: 9030
-      HEARTBEAT_PORT: 9050
-    volumes: 
-      - ./conf/init/init.sh:/opt/apache-doris/init/init.sh
-    depends_on:
-      doris-fe2:
-        condition: service_healthy
-      doris-fe3:
-        condition: service_healthy
-      doris-be1:
-        condition: service_healthy
-      doris-be2:
-        condition: service_healthy
-      doris-be3:
-        condition: service_healthy
-    networks:
-      doris-net:
+    extends: 
+      file: docker-compose-base.yml
+      service: doris-be3
 
 networks:
   doris-net: 
