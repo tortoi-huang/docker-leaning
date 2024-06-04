@@ -1,6 +1,6 @@
 #!/bin/sh
 
-sudo docker compose down
+sudo docker compose -v down
 
 dir=$(dirname $0)
 sudo rm -rf $dir/data/be-01/log/*
