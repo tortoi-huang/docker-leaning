@@ -3,11 +3,9 @@ version: "3.8"
 x-fe: &fe
   build: img/fe
   image: apache-doris-fe:2.1.2
-  # image: "apache/doris:2.0.0_alpha-fe-x86_64"
   entrypoint: 
     - java
     - org.apache.doris.DorisFE
-    # - /opt/apache-doris/fe/bin/start_fe.sh
   environment: &fe-e
     CLASSPATH: /opt/apache-doris/fe/lib/doris-fe.jar:/opt/apache-doris/fe/lib/*:/opt/apache-doris/fe/lib
     DORIS_HOME: /opt/apache-doris/fe
@@ -22,9 +20,6 @@ x-fe: &fe
     DORIS_LOG_TO_STDERR: 1
     ENABLE_FQDN_MODE: true
     JAVA_OPTS: -XX:MaxRAMPercentage=75.0
-    # JAVA_OPTS: -Xmx1024m
-  networks: 
-    doris-net:
   healthcheck:
     test: ["CMD", "/opt/apache-doris/healthcheck.sh", "9030"]
     interval: 2s
@@ -33,38 +28,25 @@ x-fe: &fe
 
 x-fe2: &fe-follower
   << : *fe
-  # command:
-  #   - -helper
-  #   - fe01:9010
   healthcheck:
     test: ["CMD", "ls", "/opt/apache-doris/fe/bin/fe.pid"]
     interval: 2s
     timeout: 60s
     retries: 20
-  # depends_on:
-  #   doris-fe1:
-  #     condition: service_healthy
     
 x-be: &be
   build: img/be
   image: apache-doris-be:2.1.2
-  # image: "apache/doris:2.0.0_alpha-be-x86_64"
   entrypoint: 
     - bash
     - -x
     - /opt/apache-doris/be/bin/start_be.sh
     - --console
   healthcheck:
-    # test: ["CMD", "ls", "/opt/apache-doris/be/bin/be.pid"]
     test: ["CMD", "/opt/apache-doris/healthcheck.sh", "9050"]
     interval: 2s
     timeout: 60s
     retries: 20
-  # depends_on:
-  #   doris-fe1: 
-  #     condition: service_healthy
-  networks: 
-    doris-net:
   ulimits:
     nofile:
       soft: 65536
@@ -164,8 +146,3 @@ services:
         condition: service_healthy
       doris-be3:
         condition: service_healthy
-    networks:
-      doris-net:
-
-networks:
-  doris-net: 

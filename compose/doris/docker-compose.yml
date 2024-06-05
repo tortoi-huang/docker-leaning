@@ -32,4 +32,5 @@ services:
       service: doris-be3
 
 networks:
-  doris-net: 
+  default: 
+    name: doris-net
