@@ -1,0 +1,221 @@
+version: "3.8" 
+
+# docker compose 规定配置需要以x-开头
+
+x-controller: &kfk-controller
+  image: ${KAFKA_IMG}
+  # 镜像指定了用1001:root用户，需要更改，否则挂载的目录是属于root用户的，会导致没权限无法启动
+  user: "root"
+  environment: &controller-env
+    # 角色，可以是 broker 或者 controller
+    KAFKA_PROCESS_ROLES: 'controller'
+    # kraft controller 投票地址, controller 相当于 zookeeper
+    KAFKA_CONTROLLER_QUORUM_VOTERS: 0@controller-0:${CONTROLLER_PORT},1@controller-1:${CONTROLLER_PORT},2@controller-2:${CONTROLLER_PORT}
+    # Listeners: 格式: listener_name://[domain/ip][:port], 监听的地址和端口, domain/ip 如果为空则默认是 0.0.0.0, 
+    # 监听多个地址时可以通过 listener_name 来区分不同用途, 如这里 PLAINTEXT 对提供给 controller 使用, PLAINTEXT_HOST 提供给外部消费者使用, 通常可以不用这样拆分
+    KAFKA_LISTENERS: '${CONTROLLER_LISTENER_NAME}://:${CONTROLLER_PORT}'
+    # 这里要和 broker 中的 KAFKA_LISTENERS 配置匹配
+    KAFKA_INTER_BROKER_LISTENER_NAME: '${BROKER_LISTENER_NAME}'
+    # 这里要与 controller 中的 KAFKA_LISTENERS 匹配
+    KAFKA_CONTROLLER_LISTENER_NAMES: '${CONTROLLER_LISTENER_NAME}'
+    # 一个集群的所有节点配置要一样 包括 broker 和 controller
+    CLUSTER_ID: '${CLUSTER_ID}'
+    # 有个 topic 保存了各个消费者的 offset, 这里配置该 topic 的副本数量, 高可用则需要配置多个
+    KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+    KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+    KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
+  networks: 
+    - kafka-cluster
+  # healthcheck:
+  #   test: ["CMD", "/opt/bitnami/kafka/bin/kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--list"]
+  #   interval: 10s
+  #   timeout: 5s
+  #   retries: 30
+x-broker: &kfk-broker
+  image: ${KAFKA_IMG}
+  # 镜像指定了用1001:root用户，需要更改，否则挂载的目录是属于root用户的，会导致没权限无法启动
+  user: "root"
+  environment: &broker-env
+    # 角色，可以是 broker 或者 controller
+    KAFKA_PROCESS_ROLES: 'broker'
+    # kraft controller 投票地址, controller 相当于 zookeeper
+    KAFKA_CONTROLLER_QUORUM_VOTERS: 0@controller-0:${CONTROLLER_PORT},1@controller-1:${CONTROLLER_PORT},2@controller-2:${CONTROLLER_PORT}
+    # Listeners: 格式: listener_name://[domain/ip][:port], 监听的地址和端口, domain/ip 如果为空则默认是 0.0.0.0, 
+    # 监听多个地址时可以通过 listener_name 来区分不同用途, 如这里 PLAINTEXT 对提供给 controller 使用, PLAINTEXT_HOST 提供给外部消费者使用, 通常可以不用这样拆分
+    KAFKA_LISTENERS: '${BROKER_LISTENER_NAME}://:19092,${ADVERTISED_LISTENER_NAME}://:${BROKER_PORT}'
+    # 配置每个 LISTENER 的访问协议, 格式为 listener_name:protocol, 多个用逗号分隔, protocol 可以是: PLAINTEXT/SSL/SASL, 如果 listener_name 是 SSL 或者 SASL 则不用在这里配置, 直接使用对应的安全协议
+    KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: '${CONTROLLER_LISTENER_NAME}:PLAINTEXT,PLAINTEXT:PLAINTEXT,${ADVERTISED_LISTENER_NAME}:PLAINTEXT'
+    # 这里要和 broker 中的 KAFKA_LISTENERS 配置匹配
+    KAFKA_INTER_BROKER_LISTENER_NAME: '${BROKER_LISTENER_NAME}'
+    # advertised.listeners: 向 zookeeper 或 controller 注册的地址, 客户端也应该用这个地址来连接 kafka, 默认为 listeners(KAFKA_LISTENERS) 的值相同
+    # KAFKA_ADVERTISED_LISTENERS: '${BROKER_LISTENER_NAME}://${hostname}:${BROKER_CONSUMER_PORT}'
+    # 这里要与 controller 中的 KAFKA_LISTENERS 匹配
+    KAFKA_CONTROLLER_LISTENER_NAMES: '${CONTROLLER_LISTENER_NAME}'
+    # 一个集群的所有节点配置要一样 包括 broker 和 controller
+    CLUSTER_ID: '${CLUSTER_ID}'
+    # 有个 topic 保存了各个消费者的 offset, 这里配置该 topic 的副本数量, 高可用则需要配置多个
+    KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    # offsets.topic.num.partitions 默认值是 50
+    # KAFKA_OFFSETS_TOPIC_NUM_PARTITIONS: 1
+    KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+    KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+    KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
+    # 其他 kafka 配置 KAFKA_ + 配置key, 并将key中的点替换为下划线，更改为大写
+  depends_on:
+    - controller-0
+    - controller-1
+    - controller-2
+  networks: 
+    - kafka-cluster
+  # healthcheck:
+  #   test: ["CMD", "/opt/bitnami/kafka/bin/kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--list"]
+  #   interval: 10s
+  #   timeout: 5s
+  #   retries: 30
+services:
+  controller-0: 
+    << : *kfk-controller
+    hostname: controller-0
+    container_name: controller-0
+    # 外挂磁盘，测试删除数据恢复
+    # volumes: 
+    #   - ./data/controller0:/bitnami/kafka
+    environment: 
+      << : *controller-env
+      KAFKA_NODE_ID: 0
+  controller-1: 
+    << : *kfk-controller
+    hostname: controller-1
+    container_name: controller-1
+    # 外挂磁盘，测试删除数据恢复
+    # volumes: 
+    #   - ./data/controller1:/bitnami/kafka
+    environment: 
+      << : *controller-env
+      KAFKA_NODE_ID: 1
+  controller-2: 
+    << : *kfk-controller
+    hostname: controller-2
+    container_name: controller-2
+    # 外挂磁盘，测试删除数据恢复
+    # volumes: 
+    #   - ./data/controller2:/bitnami/kafka
+    environment: 
+      << : *controller-env
+      KAFKA_NODE_ID: 2
+
+  broker0:
+    # 使用yaml的锚点语法引用锚点
+    << : *kfk-broker
+    hostname: broker0
+    container_name: broker0
+    # volumes: 
+    #   - ./data/broker0:/bitnami/kafka
+    environment: 
+      << : *broker-env
+      KAFKA_NODE_ID: 3
+      # 这里决定了客户端使用哪个端口访问
+      KAFKA_ADVERTISED_LISTENERS: '${BROKER_LISTENER_NAME}://broker0:${BROKER_CONSUMER_PORT}'
+  broker1:
+    # 使用yaml的锚点语法引用锚点
+    << : *kfk-broker
+    hostname: broker1
+    container_name: broker1
+    # volumes: 
+    #   - ./data/broker1:/bitnami/kafka
+    environment: 
+      << : *broker-env
+      KAFKA_NODE_ID: 4
+      KAFKA_ADVERTISED_LISTENERS: '${BROKER_LISTENER_NAME}://broker1:${BROKER_CONSUMER_PORT}'
+  broker2:
+    # 使用yaml的锚点语法引用锚点
+    << : *kfk-broker
+    hostname: broker2
+    container_name: broker2
+    # volumes: 
+    #   - ./data/broker2:/bitnami/kafka
+    environment: 
+      << : *broker-env
+      KAFKA_NODE_ID: 5
+      KAFKA_ADVERTISED_LISTENERS: '${BROKER_LISTENER_NAME}://broker2:${BROKER_CONSUMER_PORT}'
+
+  kafka-exporter:
+    image: docker.io/bitnami/kafka-exporter:1.7.0
+    user: "root"
+    command: ["--kafka.server=broker0:${BROKER_CONSUMER_PORT}", "--kafka.server=broker1:${BROKER_CONSUMER_PORT}", "--kafka.server=broker2:${BROKER_CONSUMER_PORT}"]
+    hostname: kafka-exporter
+    container_name: kafka-exporter
+    ports:
+      - 9308:9308
+    networks: 
+      - kafka-cluster
+    depends_on: 
+      - broker0
+      - broker1
+      - broker2
+
+  prometheus:
+    image: bitnami/prometheus:2.54.1
+    # user: "root"
+    hostname: prometheus
+    container_name: prometheus
+    volumes: 
+      - prometheus_v:/opt/bitnami/prometheus/data
+      # 配置kafka exporter地址
+      - ./config/prometheus.yml:/opt/bitnami/prometheus/conf/prometheus.yml
+    ports:
+      - 9090:9090
+    depends_on: 
+      - kafka-exporter
+    networks: 
+      - kafka-cluster
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    # user: "root"
+    hostname: grafana
+    container_name: grafana
+    ports:
+      - '3000:3000'
+    volumes:
+      # - ./data/grafana:/var/lib/grafana
+      - grafana_v:/var/lib/grafana
+    networks: 
+      - kafka-cluster
+
+  kafka-ui:
+    container_name: kafka-ui
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - 8080:8080
+    environment:
+      DYNAMIC_CONFIG_ENABLED: 'true'
+      KAFKA_CLUSTERS_0_NAME: kafka_test
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: broker0:${BROKER_CONSUMER_PORT},broker1:${BROKER_CONSUMER_PORT},broker2:${BROKER_CONSUMER_PORT}
+      # KAFKA_CLUSTERS_0_READONLY: true
+    # volumes:
+    #   - ~/kui/config.yml:/etc/kafkaui/dynamic_config.yaml
+    networks: 
+      - kafka-cluster
+
+networks:
+  kafka-cluster: 
+    name: kafka-cluster
+    ipam:
+      driver: default
+      config: 
+        - subnet: 192.168.164.0/20
+volumes:
+#   kafka_0_data:
+#     driver: local
+#   kafka_1_data:
+#     driver: local
+#   kafka_2_data:
+#     driver: local
+  prometheus_v:
+    driver: local
+  grafana_v:
+    driver: local
