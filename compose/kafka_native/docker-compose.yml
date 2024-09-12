@@ -56,13 +56,23 @@ x-broker: &kfk-broker
     # 一个集群的所有节点配置要一样 包括 broker 和 controller
     CLUSTER_ID: '${CLUSTER_ID}'
     # 有个 topic 保存了各个消费者的 offset, 这里配置该 topic 的副本数量, 高可用则需要配置多个
-    KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
     # offsets.topic.num.partitions 默认值是 50
     # KAFKA_OFFSETS_TOPIC_NUM_PARTITIONS: 1
     KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
     KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
     KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
     KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
+    KAFKA_COMPRESSION_TYPE: gzip
+    KAFKA_LOG_RETENTION_HOURS: 72
+    # 当生产者使用 ack=all 参数时至少需要写入两个副本才能向生产者返回写入成功, 这意味这不能对只有1个副本的topic使用 ack=all 参数; 如果对副本数量超过此配置的topic使用 ack=all 则依然需要所有副本写入才能返回成功
+    KAFKA_MIN_INSYNC_REPLICAS: 2
+    # 处理每个客户端的线程数, 该值默认为3 大topic显得不够
+    KAFKA_NUM_NETWORK_THREADS: 5
+    # 默认分区数, 默认值1
+    KAFKA_NUM_PARTITIONS: 3
+    # 默认副本数
+    KAFKA_DEFAULT_REPLICATION_FACTOR: 3
     # 其他 kafka 配置 KAFKA_ + 配置key, 并将key中的点替换为下划线，更改为大写
   depends_on:
     - controller-0
