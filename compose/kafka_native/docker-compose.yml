@@ -2,30 +2,52 @@ version: "3.8"
 
 # docker compose 规定配置需要以x-开头
 
+x-common-env: &common-env
+    # kraft controller 投票地址, controller 相当于 zookeeper
+  KAFKA_CONTROLLER_QUORUM_VOTERS: 0@controller-0:${CONTROLLER_PORT},1@controller-1:${CONTROLLER_PORT},2@controller-2:${CONTROLLER_PORT}
+  # 这里要和 broker 中的 KAFKA_LISTENERS 配置匹配
+  KAFKA_INTER_BROKER_LISTENER_NAME: '${BROKER_LISTENER_NAME}'
+  # advertised.listeners: 向 zookeeper 或 controller 注册的地址, 客户端也应该用这个地址来连接 kafka, 默认为 listeners(KAFKA_LISTENERS) 的值相同
+  # KAFKA_ADVERTISED_LISTENERS: '${BROKER_LISTENER_NAME}://${hostname}:${BROKER_CONSUMER_PORT}'
+  # 这里要与 controller 中的 KAFKA_LISTENERS 匹配
+  KAFKA_CONTROLLER_LISTENER_NAMES: '${CONTROLLER_LISTENER_NAME}'
+  # 一个集群的所有节点配置要一样 包括 broker 和 controller
+  CLUSTER_ID: '${CLUSTER_ID}'
+  # 有个 topic 保存了各个消费者的 offset, 这里配置该 topic 的副本数量, 高可用则需要配置多个
+  KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
+  # offsets.topic.num.partitions 默认值是 50
+  KAFKA_OFFSETS_TOPIC_NUM_PARTITIONS: 3
+  KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+  KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+  KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+  # 日志存放路径
+  KAFKA_LOG_DIRS: '/data/kraft-combined-logs'
+
+  KAFKA_COMPRESSION_TYPE: gzip
+  KAFKA_COMPRESSION_GZIP_LEVEL: 9
+  KAFKA_LOG_RETENTION_HOURS: 72
+  KAFKA_DELETE_RETENTION_MS: 72
+  # 对于副本数大于1 的topic 至少2个副本保存成功才会返回成功, 对于副本数小于此值的topic无效。 与 acks=all 的区别时 acks=all 要求所有存活副本返回成功, 而这个配置不管副本是否存活
+  KAFKA_MIN_INSYNC_REPLICAS: 2
+  # 处理每个客户端的线程数, 该值默认为3 大topic显得不够
+  KAFKA_NUM_NETWORK_THREADS: 5
+  # 默认分区数, 默认值1
+  KAFKA_NUM_PARTITIONS: 3
+  # 默认副本数
+  KAFKA_DEFAULT_REPLICATION_FACTOR: 2
+  # 其他 kafka 配置 KAFKA_ + 配置key, 并将key中的点替换为下划线，更改为大写
+
 x-controller: &kfk-controller
   image: ${KAFKA_IMG}
   # 镜像指定了用1001:root用户，需要更改，否则挂载的目录是属于root用户的，会导致没权限无法启动
   user: "root"
   environment: &controller-env
+    << : *common-env
     # 角色，可以是 broker 或者 controller
     KAFKA_PROCESS_ROLES: 'controller'
-    # kraft controller 投票地址, controller 相当于 zookeeper
-    KAFKA_CONTROLLER_QUORUM_VOTERS: 0@controller-0:${CONTROLLER_PORT},1@controller-1:${CONTROLLER_PORT},2@controller-2:${CONTROLLER_PORT}
     # Listeners: 格式: listener_name://[domain/ip][:port], 监听的地址和端口, domain/ip 如果为空则默认是 0.0.0.0, 
     # 监听多个地址时可以通过 listener_name 来区分不同用途, 如这里 PLAINTEXT 对提供给 controller 使用, PLAINTEXT_HOST 提供给外部消费者使用, 通常可以不用这样拆分
     KAFKA_LISTENERS: '${CONTROLLER_LISTENER_NAME}://:${CONTROLLER_PORT}'
-    # 这里要和 broker 中的 KAFKA_LISTENERS 配置匹配
-    KAFKA_INTER_BROKER_LISTENER_NAME: '${BROKER_LISTENER_NAME}'
-    # 这里要与 controller 中的 KAFKA_LISTENERS 匹配
-    KAFKA_CONTROLLER_LISTENER_NAMES: '${CONTROLLER_LISTENER_NAME}'
-    # 一个集群的所有节点配置要一样 包括 broker 和 controller
-    CLUSTER_ID: '${CLUSTER_ID}'
-    # 有个 topic 保存了各个消费者的 offset, 这里配置该 topic 的副本数量, 高可用则需要配置多个
-    KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-    KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-    KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-    KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-    KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
   networks: 
     - kafka-cluster
   # healthcheck:
@@ -38,44 +60,15 @@ x-broker: &kfk-broker
   # 镜像指定了用1001:root用户，需要更改，否则挂载的目录是属于root用户的，会导致没权限无法启动
   user: "root"
   environment: &broker-env
+    << : *common-env
     # 角色，可以是 broker 或者 controller
     KAFKA_PROCESS_ROLES: 'broker'
-    # kraft controller 投票地址, controller 相当于 zookeeper
-    KAFKA_CONTROLLER_QUORUM_VOTERS: 0@controller-0:${CONTROLLER_PORT},1@controller-1:${CONTROLLER_PORT},2@controller-2:${CONTROLLER_PORT}
     # Listeners: 格式: listener_name://[domain/ip][:port], 监听的地址和端口, domain/ip 如果为空则默认是 0.0.0.0, 
     # 监听多个地址时可以通过 listener_name 来区分不同用途, 如这里 PLAINTEXT 对提供给 controller 使用, PLAINTEXT_HOST 提供给外部消费者使用, 通常可以不用这样拆分
     KAFKA_LISTENERS: '${BROKER_LISTENER_NAME}://:19092,${ADVERTISED_LISTENER_NAME}://:${BROKER_PORT}'
     # 配置每个 LISTENER 的访问协议, 格式为 listener_name:protocol, 多个用逗号分隔, protocol 可以是: PLAINTEXT/SSL/SASL, 如果 listener_name 是 SSL 或者 SASL 则不用在这里配置, 直接使用对应的安全协议
     KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: '${CONTROLLER_LISTENER_NAME}:PLAINTEXT,PLAINTEXT:PLAINTEXT,${ADVERTISED_LISTENER_NAME}:PLAINTEXT'
-    # 这里要和 broker 中的 KAFKA_LISTENERS 配置匹配
-    KAFKA_INTER_BROKER_LISTENER_NAME: '${BROKER_LISTENER_NAME}'
-    # advertised.listeners: 向 zookeeper 或 controller 注册的地址, 客户端也应该用这个地址来连接 kafka, 默认为 listeners(KAFKA_LISTENERS) 的值相同
-    # KAFKA_ADVERTISED_LISTENERS: '${BROKER_LISTENER_NAME}://${hostname}:${BROKER_CONSUMER_PORT}'
-    # 这里要与 controller 中的 KAFKA_LISTENERS 匹配
-    KAFKA_CONTROLLER_LISTENER_NAMES: '${CONTROLLER_LISTENER_NAME}'
-    # 一个集群的所有节点配置要一样 包括 broker 和 controller
-    CLUSTER_ID: '${CLUSTER_ID}'
-    # 有个 topic 保存了各个消费者的 offset, 这里配置该 topic 的副本数量, 高可用则需要配置多个
-    KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
-    # offsets.topic.num.partitions 默认值是 50
-    # KAFKA_OFFSETS_TOPIC_NUM_PARTITIONS: 1
-    KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-    KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-    KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-    KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
-
-    # TODO 似乎下列配置不生效
-    KAFKA_COMPRESSION_TYPE: gzip
-    KAFKA_LOG_RETENTION_HOURS: 72
-    # 当生产者使用 ack=all 参数时至少需要写入两个副本才能向生产者返回写入成功, 这意味这不能对只有1个副本的topic使用 ack=all 参数; 如果对副本数量超过此配置的topic使用 ack=all 则依然需要所有副本写入才能返回成功
-    KAFKA_MIN_INSYNC_REPLICAS: 2
-    # 处理每个客户端的线程数, 该值默认为3 大topic显得不够
-    KAFKA_NUM_NETWORK_THREADS: 5
-    # 默认分区数, 默认值1
-    KAFKA_NUM_PARTITIONS: 3
-    # 默认副本数
-    KAFKA_DEFAULT_REPLICATION_FACTOR: 2
-    # 其他 kafka 配置 KAFKA_ + 配置key, 并将key中的点替换为下划线，更改为大写
+    
   depends_on:
     - controller-0
     - controller-1
@@ -93,8 +86,8 @@ services:
     hostname: controller-0
     container_name: controller-0
     # 外挂磁盘，测试删除数据恢复
-    # volumes: 
-    #   - ./data/controller0:/bitnami/kafka
+    volumes: 
+      - ./data/controller0:/data
     environment: 
       << : *controller-env
       KAFKA_NODE_ID: 0
@@ -103,8 +96,8 @@ services:
     hostname: controller-1
     container_name: controller-1
     # 外挂磁盘，测试删除数据恢复
-    # volumes: 
-    #   - ./data/controller1:/bitnami/kafka
+    volumes: 
+      - ./data/controller1:/data
     environment: 
       << : *controller-env
       KAFKA_NODE_ID: 1
@@ -113,8 +106,8 @@ services:
     hostname: controller-2
     container_name: controller-2
     # 外挂磁盘，测试删除数据恢复
-    # volumes: 
-    #   - ./data/controller2:/bitnami/kafka
+    volumes: 
+      - ./data/controller2:/data
     environment: 
       << : *controller-env
       KAFKA_NODE_ID: 2
@@ -124,8 +117,8 @@ services:
     << : *kfk-broker
     hostname: broker0
     container_name: broker0
-    # volumes: 
-    #   - ./data/broker0:/bitnami/kafka
+    volumes: 
+      - ./data/broker0:/data
     environment: 
       << : *broker-env
       KAFKA_NODE_ID: 3
@@ -136,8 +129,8 @@ services:
     << : *kfk-broker
     hostname: broker1
     container_name: broker1
-    # volumes: 
-    #   - ./data/broker1:/bitnami/kafka
+    volumes: 
+      - ./data/broker1:/data
     environment: 
       << : *broker-env
       KAFKA_NODE_ID: 4
@@ -147,8 +140,8 @@ services:
     << : *kfk-broker
     hostname: broker2
     container_name: broker2
-    # volumes: 
-    #   - ./data/broker2:/bitnami/kafka
+    volumes: 
+      - ./data/broker2:/data
     environment: 
       << : *broker-env
       KAFKA_NODE_ID: 5

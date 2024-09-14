@@ -17,7 +17,7 @@ bin/kafka-topics.sh --list --bootstrap-server broker1:19092
 ### 发送消息
 ```shell
 # parse.key 表示消息格式为 key value, 配置为 false 则只有 value, key 和 value 默认使用 tab 分隔
-bin/kafka-console-producer.sh --bootstrap-server broker1:19092 --topic test1 --property parse.key=true
+bin/kafka-console-producer.sh --bootstrap-server broker1:19092 --topic test1 --property parse.key=true acks=all
 ```
 ### 消费消息
 ```shell
@@ -28,20 +28,21 @@ bin/kafka-console-consumer.sh --bootstrap-server broker1:19092 --topic test1 --g
  
 1. 查看topic原来状态
 ```shell
-bin/kafka-topics.sh --bootstrap-server broker1:19092 --topic test1 --describe
+bin/kafka-topics.sh --bootstrap-server broker1:19092 --describe --topic test1
 ```
 2. 停止一个节点
 3. 查看topic状态变化
 4. 发送消息
 5. 启动停止节点 查看数据变化
 6. 停止一个节点，同时删除该节点和该节点的数据目录，重新启动节点，确认新节点加入后数据可以恢复
+7. 停止两个节点，只有一个存活节点，MIN_INSYNC_REPLICAS=2时插入数据失败, MIN_INSYNC_REPLICAS=1时插入成功
 
 ### 压测
 1. 生产
 ```shell
 
 # throughput 每秒发送消息数量-1不限制，num-records总共发送消息数量
-bin/kafka-producer-perf-test.sh --topic test1 --num-records 1000000 --record-size 1024 --throughput -1 --producer-props bootstrap.servers=broker1:19092
+bin/kafka-producer-perf-test.sh --topic test1 --num-records 100000 --record-size 1024 --throughput -1 --producer-props bootstrap.servers=broker1:19092 acks=all
 ```
 2. 消费
 ```shell
@@ -81,3 +82,8 @@ grafana 初始用户名密码为 admin/admin, 首次登陆需要修改
 这里 7589 是 grafana 维护的一个 Dashboard 编号, 需要联网下载相关文件, 可以通过 https://grafana.com/grafana/dashboards/ 查找到各种 Dashboard
 7. 在 Prometheus 输入框选择刚才配置的 data source, 点击 import
 
+## 总结
+1. acks=all 要求所有存活的 replication 持久化成功，不要求已经宕机的 replication 持久化成功
+2. min.insync.replicas topic 写成功的最小副本数, 默认值为 1. 只要符合此配置, 即便存活的 replication 小于 topic replication 总数的一半也能写成功, eplication 总数小于此值的 topic 不受影响。
+## 问题
+1. 按角色区分节点后，我发区分哪些参数应该配置在 controller，哪些应该配置在 broker

@@ -67,3 +67,5 @@ compose/doris/office/data
 compose/doris/office-custom/data
 compose/doris/data
 compose/doris/img/temp
+
+compose/kafka_native/data
