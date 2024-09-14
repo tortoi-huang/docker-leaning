@@ -82,8 +82,11 @@ grafana 初始用户名密码为 admin/admin, 首次登陆需要修改
 这里 7589 是 grafana 维护的一个 Dashboard 编号, 需要联网下载相关文件, 可以通过 https://grafana.com/grafana/dashboards/ 查找到各种 Dashboard
 7. 在 Prometheus 输入框选择刚才配置的 data source, 点击 import
 
+## 多租户
+
 ## 总结
 1. acks=all 要求所有存活的 replication 持久化成功，不要求已经宕机的 replication 持久化成功
 2. min.insync.replicas topic 写成功的最小副本数, 默认值为 1. 只要符合此配置, 即便存活的 replication 小于 topic replication 总数的一半也能写成功, eplication 总数小于此值的 topic 不受影响。
+3. 生产环境中建议部署 controller 和 broker 隔离模式, controller 部署 3 或者 5 个节点即可, 按官网建议， controller 需要 5G 内存和 5G 磁盘空间即可
 ## 问题
 1. 按角色区分节点后，我发区分哪些参数应该配置在 controller，哪些应该配置在 broker

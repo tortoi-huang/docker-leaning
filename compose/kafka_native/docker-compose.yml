@@ -5,13 +5,13 @@ version: "3.8"
 x-common-env: &common-env
     # kraft controller 投票地址, controller 相当于 zookeeper
   KAFKA_CONTROLLER_QUORUM_VOTERS: 0@controller-0:${CONTROLLER_PORT},1@controller-1:${CONTROLLER_PORT},2@controller-2:${CONTROLLER_PORT}
-  # 这里要和 broker 中的 KAFKA_LISTENERS 配置匹配
+  # 这里定义了分区和副本复制使用的监听器,要和 broker 中的 KAFKA_LISTENERS 配置匹配
   KAFKA_INTER_BROKER_LISTENER_NAME: '${BROKER_LISTENER_NAME}'
-  # advertised.listeners: 向 zookeeper 或 controller 注册的地址, 客户端也应该用这个地址来连接 kafka, 默认为 listeners(KAFKA_LISTENERS) 的值相同
-  # KAFKA_ADVERTISED_LISTENERS: '${BROKER_LISTENER_NAME}://${hostname}:${BROKER_CONSUMER_PORT}'
   # 这里要与 controller 中的 KAFKA_LISTENERS 匹配
   KAFKA_CONTROLLER_LISTENER_NAMES: '${CONTROLLER_LISTENER_NAME}'
-  # 一个集群的所有节点配置要一样 包括 broker 和 controller
+  # 配置每个 LISTENER 的访问协议, 格式为 listener_name:protocol, 多个用逗号分隔, protocol 可以是: PLAINTEXT/SSL/SASL/SASL_PLAINTEXT/SASL_SSL, 如果 listener_name 是 SSL 或者 SASL 则不用在这里配置, 直接使用对应的安全协议
+  KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: '${CONTROLLER_LISTENER_NAME}:PLAINTEXT,${BROKER_LISTENER_NAME}:PLAINTEXT,${INTER_BROKER_LISTENER_NAME}:PLAINTEXT'
+  # 一个集群的所有节点配置要一样 包括 broker 和 controller, 随机一个字符串或者使用命令生成: bin/kafka-storage.sh random-uuid
   CLUSTER_ID: '${CLUSTER_ID}'
   # 有个 topic 保存了各个消费者的 offset, 这里配置该 topic 的副本数量, 高可用则需要配置多个
   KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
@@ -64,10 +64,8 @@ x-broker: &kfk-broker
     # 角色，可以是 broker 或者 controller
     KAFKA_PROCESS_ROLES: 'broker'
     # Listeners: 格式: listener_name://[domain/ip][:port], 监听的地址和端口, domain/ip 如果为空则默认是 0.0.0.0, 
-    # 监听多个地址时可以通过 listener_name 来区分不同用途, 如这里 PLAINTEXT 对提供给 controller 使用, PLAINTEXT_HOST 提供给外部消费者使用, 通常可以不用这样拆分
-    KAFKA_LISTENERS: '${BROKER_LISTENER_NAME}://:19092,${ADVERTISED_LISTENER_NAME}://:${BROKER_PORT}'
-    # 配置每个 LISTENER 的访问协议, 格式为 listener_name:protocol, 多个用逗号分隔, protocol 可以是: PLAINTEXT/SSL/SASL, 如果 listener_name 是 SSL 或者 SASL 则不用在这里配置, 直接使用对应的安全协议
-    KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: '${CONTROLLER_LISTENER_NAME}:PLAINTEXT,PLAINTEXT:PLAINTEXT,${ADVERTISED_LISTENER_NAME}:PLAINTEXT'
+    # 监听多个地址时可以通过 listener_name 来区分不同用途, 如这里 ${BROKER_LISTENER_NAME} 对提供给 controller 使用, PLAINTEXT_HOST 提供给外部消费者使用,
+    KAFKA_LISTENERS: '${BROKER_LISTENER_NAME}://:${BROKER_CONSUMER_PORT},${INTER_BROKER_LISTENER_NAME}://:${INTER_BROKER_LISTENER_PORT}'
     
   depends_on:
     - controller-0
