@@ -6,7 +6,7 @@ x-common-env: &common-env
     # kraft controller 投票地址, controller 相当于 zookeeper
   KAFKA_CONTROLLER_QUORUM_VOTERS: 0@controller-0:${CONTROLLER_PORT},1@controller-1:${CONTROLLER_PORT},2@controller-2:${CONTROLLER_PORT}
   # 这里定义了分区和副本复制使用的监听器,要和 broker 中的 KAFKA_LISTENERS 配置匹配
-  KAFKA_INTER_BROKER_LISTENER_NAME: '${BROKER_LISTENER_NAME}'
+  KAFKA_INTER_BROKER_LISTENER_NAME: '${INTER_BROKER_LISTENER_NAME}'
   # 这里要与 controller 中的 KAFKA_LISTENERS 匹配
   KAFKA_CONTROLLER_LISTENER_NAMES: '${CONTROLLER_LISTENER_NAME}'
   # 配置每个 LISTENER 的访问协议, 格式为 listener_name:protocol, 多个用逗号分隔, protocol 可以是: PLAINTEXT/SSL/SASL/SASL_PLAINTEXT/SASL_SSL, 如果 listener_name 是 SSL 或者 SASL 则不用在这里配置, 直接使用对应的安全协议
@@ -121,7 +121,7 @@ services:
       << : *broker-env
       KAFKA_NODE_ID: 3
       # 这里决定了客户端使用哪个端口访问
-      KAFKA_ADVERTISED_LISTENERS: '${BROKER_LISTENER_NAME}://broker0:${BROKER_CONSUMER_PORT}'
+      KAFKA_ADVERTISED_LISTENERS: '${BROKER_LISTENER_NAME}://broker0:${BROKER_CONSUMER_PORT},${INTER_BROKER_LISTENER_NAME}://broker0:${INTER_BROKER_LISTENER_PORT}'
   broker1:
     # 使用yaml的锚点语法引用锚点
     << : *kfk-broker
@@ -132,7 +132,7 @@ services:
     environment: 
       << : *broker-env
       KAFKA_NODE_ID: 4
-      KAFKA_ADVERTISED_LISTENERS: '${BROKER_LISTENER_NAME}://broker1:${BROKER_CONSUMER_PORT}'
+      KAFKA_ADVERTISED_LISTENERS: '${BROKER_LISTENER_NAME}://broker1:${BROKER_CONSUMER_PORT},${INTER_BROKER_LISTENER_NAME}://broker0:${INTER_BROKER_LISTENER_PORT}'
   broker2:
     # 使用yaml的锚点语法引用锚点
     << : *kfk-broker
@@ -143,7 +143,7 @@ services:
     environment: 
       << : *broker-env
       KAFKA_NODE_ID: 5
-      KAFKA_ADVERTISED_LISTENERS: '${BROKER_LISTENER_NAME}://broker2:${BROKER_CONSUMER_PORT}'
+      KAFKA_ADVERTISED_LISTENERS: '${BROKER_LISTENER_NAME}://broker2:${BROKER_CONSUMER_PORT},${INTER_BROKER_LISTENER_NAME}://broker0:${INTER_BROKER_LISTENER_PORT}'
 
   kafka-exporter:
     image: docker.io/bitnami/kafka-exporter:1.7.0
