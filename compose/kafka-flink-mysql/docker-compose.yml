@@ -164,6 +164,25 @@ services:
       <<: *flink-task-env
     # volumes: 
     #   - taskmanager1_data:/bitnami/kafka
+  sql-gateway:
+    <<: *flink
+    container_name: sql
+    hostname: sql-gateway
+    # entrypoint: /opt/flink/bin/sql-gateway.sh
+    command: 
+      - bin/sql-gateway.sh
+      - start-foreground
+      # rest.address 指向集群地址
+      - -Drest.address=jobmanager
+      - -Dsql-gateway.endpoint.rest.address=localhost
+    ports:
+      - "8083:8083"
+    environment: 
+      # <<: *flink-env
+      TEST_HUANG: 123
+    depends_on: 
+      jobmanager:
+        condition: service_healthy
       
   mariadb:
     container_name: mariadb
