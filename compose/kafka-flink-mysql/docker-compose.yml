@@ -91,8 +91,8 @@ services:
     environment:
       <<: *controller-env
       KAFKA_CFG_NODE_ID: 0
-    # volumes: 
-    #   - controller_0_data:/bitnami/kafka
+    volumes: 
+      - controller_0_data:/bitnami/kafka
   controller1:
     <<: *kfk-controller
     container_name: controller1
@@ -100,8 +100,8 @@ services:
     environment:
       <<: *controller-env
       KAFKA_CFG_NODE_ID: 1
-    # volumes: 
-    #   - controller_1_data:/bitnami/kafka
+    volumes: 
+      - controller_1_data:/bitnami/kafka
   controller2:
     <<: *kfk-controller
     container_name: controller2
@@ -109,8 +109,8 @@ services:
     environment:
       <<: *controller-env
       KAFKA_CFG_NODE_ID: 2
-    # volumes: 
-    #   - controller_2_data:/bitnami/kafka
+    volumes: 
+      - controller_2_data:/bitnami/kafka
   
   broker0: 
     <<: *kfk-broker
@@ -119,8 +119,8 @@ services:
     environment:
       <<: *broker-env
       KAFKA_CFG_NODE_ID: 3
-    # volumes: 
-    #   - broker_0_data:/bitnami/kafka
+    volumes: 
+      - broker_0_data:/bitnami/kafka
   broker1:
     <<: *kfk-broker
     container_name: broker1
@@ -128,8 +128,8 @@ services:
     environment:
       <<: *broker-env
       KAFKA_CFG_NODE_ID: 4
-    # volumes: 
-    #   - broker_1_data:/bitnami/kafka
+    volumes: 
+      - broker_1_data:/bitnami/kafka
 
   jobmanager:
     <<: *flink
@@ -172,8 +172,8 @@ services:
     environment:
       MARIADB_ROOT_PASSWORD: mypassword
     # 默认数据目录 /var/lib/mysql
-    # volumes: 
-    #   - mariadb_data:/var/lib/mysql
+    volumes: 
+      - mariadb_data:/var/lib/mysql
     networks: 
       - flink-cluster
 
@@ -184,18 +184,22 @@ networks:
     #   driver: default
     #   config: 
     #     - subnet: 192.168.64.0/20
-# volumes:
-#   kafka_0_data:
-#     driver: local
-#   kafka_1_data:
-#     driver: local
-#   kafka_2_data:
-#     driver: local
-#   jobmanager_data:
-#     driver: local
-#   taskmanager0_data:
-#     driver: local
-#   taskmanager1_data:
-#     driver: local
-#   mariadb_data:
-#     driver: local
+volumes:
+  controller_0_data:
+    driver: local
+  controller_1_data:
+    driver: local
+  controller_2_data:
+    driver: local
+  broker_0_data:
+    driver: local
+  broker_1_data:
+    driver: local
+  jobmanager_data:
+    driver: local
+  taskmanager0_data:
+    driver: local
+  taskmanager1_data:
+    driver: local
+  mariadb_data:
+    driver: local
