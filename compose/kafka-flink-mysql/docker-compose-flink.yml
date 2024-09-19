@@ -1,0 +1,43 @@
+version: "3.1" 
+
+x-flink: &flink
+  image: flink:1.20.0-java17
+  environment: &flink-env
+    FLINK_PROPERTIES: "jobmanager.rpc.address: jobmanager"
+  networks: 
+    - flink-cluster
+
+services:
+  jobmanager-temp:
+    <<: *flink
+    command: jobmanager
+    environment: 
+      <<: *flink-env
+    healthcheck:
+      test:
+        - "CMD"
+        - "curl"
+        - "localhost:8081"
+  
+  taskmanager-temp:
+    <<: *flink
+    command: taskmanager
+    environment: 
+      <<: *flink-env
+    depends_on: 
+      jobmanager:
+        condition: service_healthy
+  sql-gateway-temp:
+    <<: *flink
+    # entrypoint: /opt/flink/bin/sql-gateway.sh
+    command: 
+      - bin/sql-gateway.sh
+      - start-foreground
+      # rest.address 指向集群地址
+      - -Drest.address=jobmanager
+      - -Dsql-gateway.endpoint.rest.address=localhost
+    environment: 
+    #   <<: *flink-env
+    depends_on: 
+      jobmanager:
+        condition: service_healthy

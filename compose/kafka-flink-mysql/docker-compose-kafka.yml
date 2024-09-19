@@ -1,0 +1,63 @@
+version: "3.1" 
+
+x-kfk-env: &kfk-env
+  ALLOW_PLAINTEXT_LISTENER: yes
+  KAFKA_CFG_PROCESS_ROLES: controller,broker
+  # node id + hostname + port
+  KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 0@controller0:9093,1@controller1:9093,2@controller2:9093
+  KAFKA_KRAFT_CLUSTER_ID: abcdefghijklmnopqrstuv
+  KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: true
+
+x-kfk: &kfk-server
+  image: bitnami/kafka:3.8.0
+  networks: 
+    - flink-cluster
+
+services:
+  controller-temp: 
+    <<: *kfk-server
+    environment:
+      <<: *kfk-env
+      KAFKA_CFG_PROCESS_ROLES: controller
+      KAFKA_CFG_LISTENERS: CONTROLLER://:9093
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+    healthcheck:
+      test: 
+        - "CMD"
+        - "/opt/bitnami/kafka/bin/kafka-metadata-quorum.sh"
+        - "--bootstrap-controller"
+        - "localhost:9093"
+        - "describe"
+        - "--status"
+      interval: 10s
+      timeout: 5s
+      retries: 30
+  
+  broker-temp: 
+    <<: *kfk-server
+    environment:
+      <<: *kfk-env
+      KAFKA_CFG_PROCESS_ROLES: broker
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+    healthcheck:
+      test: 
+        - "CMD"
+        - "/opt/bitnami/kafka/bin/kafka-metadata-quorum.sh"
+        - "--bootstrap-server"
+        - "localhost:9092"
+        - "describe"
+        - "--status"
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    depends_on: 
+      controller0: 
+        condition: service_healthy
+      controller1: 
+        condition: service_healthy
+      controller2: 
+        condition: service_healthy

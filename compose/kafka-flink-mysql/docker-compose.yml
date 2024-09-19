@@ -1,73 +1,5 @@
 version: "3.1" 
 
-x-kfk-env: &kfk-env
-  ALLOW_PLAINTEXT_LISTENER: yes
-  KAFKA_CFG_PROCESS_ROLES: controller,broker
-  # node id + hostname + port
-  KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 0@controller0:9093,1@controller1:9093,2@controller2:9093
-  KAFKA_KRAFT_CLUSTER_ID: abcdefghijklmnopqrstuv
-  KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: true
-  # Listeners
-  # KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
-  # KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://:9092
-  # KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-  # KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
-  # KAFKA_CFG_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-
-x-kfk-c: &controller-env
-  <<: *kfk-env
-  KAFKA_CFG_PROCESS_ROLES: controller
-  KAFKA_CFG_LISTENERS: CONTROLLER://:9093
-  KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT
-  KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
-x-kfk-b: &broker-env
-  <<: *kfk-env
-  KAFKA_CFG_PROCESS_ROLES: broker
-  KAFKA_CFG_LISTENERS: PLAINTEXT://:9092
-  KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-  KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
-  KAFKA_CFG_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-
-x-kfk: &kfk-server
-  image: bitnami/kafka:3.8.0
-  networks: 
-    - flink-cluster
-  
-x-kfk-controller: &kfk-controller
-  <<: *kfk-server
-  healthcheck:
-    test: 
-      - "CMD"
-      - "/opt/bitnami/kafka/bin/kafka-metadata-quorum.sh"
-      - "--bootstrap-controller"
-      - "localhost:9093"
-      - "describe"
-      - "--status"
-    interval: 10s
-    timeout: 5s
-    retries: 30
-  
-x-kfk-broker: &kfk-broker
-  <<: *kfk-server
-  healthcheck:
-    test: 
-      - "CMD"
-      - "/opt/bitnami/kafka/bin/kafka-metadata-quorum.sh"
-      - "--bootstrap-server"
-      - "localhost:9092"
-      - "describe"
-      - "--status"
-    interval: 10s
-    timeout: 5s
-    retries: 30
-  depends_on: 
-    controller0: 
-      condition: service_healthy
-    controller1: 
-      condition: service_healthy
-    controller2: 
-      condition: service_healthy
-
 x-flink: &flink
   image: flink:1.20.0-java17
   environment: &flink-env
@@ -85,104 +17,92 @@ x-flink-task: &flink-task
 
 services:
   controller0: 
-    <<: *kfk-controller
+    extends: 
+      file: docker-compose-kafka.yml
+      service: controller-temp
     container_name: controller0
     hostname: controller0
     environment:
-      <<: *controller-env
       KAFKA_CFG_NODE_ID: 0
     volumes: 
       - controller_0_data:/bitnami/kafka
   controller1:
-    <<: *kfk-controller
+    extends: 
+      file: docker-compose-kafka.yml
+      service: controller-temp
     container_name: controller1
     hostname: controller1
     environment:
-      <<: *controller-env
       KAFKA_CFG_NODE_ID: 1
     volumes: 
       - controller_1_data:/bitnami/kafka
   controller2:
-    <<: *kfk-controller
+    extends: 
+      file: docker-compose-kafka.yml
+      service: controller-temp
     container_name: controller2
     hostname: controller2
     environment:
-      <<: *controller-env
       KAFKA_CFG_NODE_ID: 2
     volumes: 
       - controller_2_data:/bitnami/kafka
   
   broker0: 
-    <<: *kfk-broker
+    extends: 
+      file: docker-compose-kafka.yml
+      service: broker-temp
     container_name: broker0
     hostname: broker0
     environment:
-      <<: *broker-env
       KAFKA_CFG_NODE_ID: 3
     volumes: 
       - broker_0_data:/bitnami/kafka
   broker1:
-    <<: *kfk-broker
+    extends: 
+      file: docker-compose-kafka.yml
+      service: broker-temp
     container_name: broker1
     hostname: broker1
     environment:
-      <<: *broker-env
       KAFKA_CFG_NODE_ID: 4
     volumes: 
       - broker_1_data:/bitnami/kafka
 
   jobmanager:
-    <<: *flink
+    extends: 
+      file: docker-compose-flink.yml
+      service: jobmanager-temp
     container_name: jobmgr
     hostname: jobmanager
-    command: jobmanager
     ports:
       - "8081:8081"
-    environment: 
-      <<: *flink-env
-    healthcheck:
-      test:
-        - "CMD"
-        - "curl"
-        - "localhost:8081"
     # volumes: 
     #   - jobmanager_data:/bitnami/kafka
   
   taskmanager0:
-    <<: *flink-task
+    extends: 
+      file: docker-compose-flink.yml
+      service: taskmanager-temp
     container_name: taskmgr0
     hostname: taskmanager0
-    environment: 
-      <<: *flink-task-env
     # volumes: 
     #   - taskmanager0_data:/bitnami/kafka
   taskmanager1:
-    <<: *flink-task
+    extends: 
+      file: docker-compose-flink.yml
+      service: taskmanager-temp
     container_name: taskmgr1
     hostname: taskmanager1
-    environment: 
-      <<: *flink-task-env
     # volumes: 
     #   - taskmanager1_data:/bitnami/kafka
   sql-gateway:
-    <<: *flink
+    extends: 
+      file: docker-compose-flink.yml
+      service: sql-gateway-temp
     container_name: sql
     hostname: sql-gateway
-    # entrypoint: /opt/flink/bin/sql-gateway.sh
-    command: 
-      - bin/sql-gateway.sh
-      - start-foreground
-      # rest.address 指向集群地址
-      - -Drest.address=jobmanager
-      - -Dsql-gateway.endpoint.rest.address=localhost
     ports:
       - "8083:8083"
-    environment: 
-      # <<: *flink-env
-      TEST_HUANG: 123
-    depends_on: 
-      jobmanager:
-        condition: service_healthy
       
   mariadb:
     container_name: mariadb
