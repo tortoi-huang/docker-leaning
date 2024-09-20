@@ -1,0 +1,106 @@
+blob:
+  server:
+    port: '6124'
+taskmanager:
+  memory:
+    # jvm 线程总共可用内存, 这里可以配置和容器内存一样大小
+    process:
+      size: 768m
+    # 所有堆内存+堆外内存, 不含元数据和overhead内存
+    flink:
+      size: 512m
+    # # flink 框架使用的内存, 不含用户提交的算子程序 
+    # framework:
+    #   # 默认 128m
+    #   heap: 
+    #     size: 128m
+    #   off-heap: 
+    #     # 默认 128m
+    #     size: 128m
+    #     # 默认 32m
+    #     batch-shuffle: 
+    #       size: 32m
+    # 元数据空间内存, 默认256m
+    jvm-metaspace:
+      # 默认 256m
+      size: 128m
+    # overhead内存, 如编译字节码到机器码需要的内存， 缓存jit指令等
+    jvm-overhead:
+      # 默认192m
+      min: 128m
+    #   # 默认 1g
+    #   max: 1G
+    #   # 默认 0.1
+    #   fraction: 128m
+    # # 应用的算子及用户代码的 JVM 堆内存
+    # task:
+    #   heap:
+    #     size: 256m
+    #   # 默认 0
+    #   off-heap:
+    #     size: 256m
+    # 由 Flink 管理的用于排序、哈希表、缓存中间结果及 RocksDB State Backend 的本地内存, 无默认值, fraction 按比例分配
+    managed:
+      # 无默认, 这个值自自动计算不准确, 如果修改了默认的总内存设置需要手动设定
+      size: 192m
+      # # 默认0.4
+      # fraction: 0.4
+    # network: 
+    #   # 默认 64m
+    #   min: 64m
+    #   # 默认 1g
+    #   max: 1g
+    #   # 默认 0.1
+    #   fraction: 0.1
+  bind-host: 0.0.0.0
+  numberOfTaskSlots: '2'
+jobmanager:
+  execution:
+    failover-strategy: region
+  rpc:
+    address: jobmanager
+    port: 6123
+  memory:
+    # jvm 线程总共可用内存, 这里可以配置和容器内存一样大小
+    process:
+      size: 768m
+    # # 堆内存+堆外内存, 不含元数据内存
+    # flink:
+    #   size: 384m
+    # # 堆内存
+    # heap:
+    #   size: 256m
+    # # 堆外内存
+    # off-heap:
+    #   size: 128m
+    # # 元数据空间内存
+    # jvm-metaspace:
+    #   size: 128m
+    # # overhead内存, 如编译字节码到机器码需要的内存， 缓存jit指令等
+    # jvm-overhead:
+    #   min: 128m
+    #   max: 1G
+    #   fraction: 128m
+  bind-host: 0.0.0.0
+query:
+  server:
+    port: '6125'
+rest:
+  bind-address: 0.0.0.0
+  address: 0.0.0.0
+  port: 8081
+parallelism:
+  default: 1
+env:
+  java:
+    opts:
+      all: --add-exports=java.base/sun.net.util=ALL-UNNAMED --add-exports=java.rmi/sun.rmi.registry=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED --add-exports=java.security.jgss/sun.security.krb5=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.net=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.text=ALL-UNNAMED --add-opens=java.base/java.time=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.util.concurrent=ALL-UNNAMED --add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED --add-opens=java.base/java.util.concurrent.locks=ALL-UNNAMED
+
+state:
+  backend: rocksdb
+  # jobmanager or filesystem
+  checkpoint-storage: jobmanager
+  # checkpoints:
+  #   dir: s3://storage
+  # savepoints:
+  #   dir: s3://storage
