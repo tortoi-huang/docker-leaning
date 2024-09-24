@@ -65,7 +65,7 @@ curl http://localhost:8083/v3/info
 export sg_sid=$(curl -X POST http://localhost:8083/v3/sessions|jq -r '.sessionHandle')
 echo $sg_sid
 
-curl -X POST http://localhost:8083/v3/sessions/$sg_sid/statements --data '{"statement": "select 2"}'
+curl -X POST http://localhost:8083/v3/sessions/$sg_sid/statements --data '{"statement": "SELECT 1"}'
 # 查看 http://localhost:8081/#/job/completed 可以看到任务已经提交
 ```
 

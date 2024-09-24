@@ -136,8 +136,8 @@ services:
     # volumes: 
     #   - jobmanager_data:/bitnami/kafka
     depends_on:
-      minio:
-        condition: service_healthy
+      minio-mc:
+        condition: service_completed_successfully
   
   taskmanager0:
     extends: 
