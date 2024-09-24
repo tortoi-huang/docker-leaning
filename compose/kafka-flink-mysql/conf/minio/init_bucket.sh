@@ -14,6 +14,8 @@ if [ $? -eq 0 ]; then
     # mc rm -r --force myminio/flink;
 else
     mc mb myminio/flink;
+    mc mb myminio/flink/checkpoints;
+    mc mb myminio/flink/savepoints;
 fi
 
 

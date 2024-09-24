@@ -16,6 +16,9 @@ services:
     #     taskmanager.numberOfTaskSlots: 2
     volumes: 
       - ./conf/flink/jobmanager/config.yaml:/opt/flink/conf/config.yaml:ro
+      - ./lib/s3:/opt/flink/plugins/s3:ro
+      - ./lib/kafka/flink-connector-kafka-3.2.0-1.19.jar:/opt/flink/lib/flink-connector-kafka-3.2.0-1.19.jar:ro
+      - ./lib/kafka/kafka-clients-3.8.0.jar:/opt/flink/lib/kafka-clients-3.8.0.jar:ro
     healthcheck:
       test:
         - "CMD"
@@ -36,6 +39,9 @@ services:
     #     taskmanager.numberOfTaskSlots: 2
     volumes: 
       - ./conf/flink/jobmanager/config.yaml:/opt/flink/conf/config.yaml:ro
+      - ./lib/s3:/opt/flink/plugins/s3:ro
+      - ./lib/kafka/flink-connector-kafka-3.2.0-1.19.jar:/opt/flink/lib/flink-connector-kafka-3.2.0-1.19.jar:ro
+      - ./lib/kafka/kafka-clients-3.8.0.jar:/opt/flink/lib/kafka-clients-3.8.0.jar:ro
     depends_on: 
       jobmanager:
         condition: service_healthy
@@ -52,12 +58,16 @@ services:
       - start-foreground
       # rest.address 指向集群地址
       - -Drest.address=jobmanager
-      - -Dsql-gateway.endpoint.rest.address=localhost
+      - -Dsql-gateway.endpoint.rest.address=sql-gateway
+    volumes: 
+      - ./lib/kafka/flink-connector-kafka-3.2.0-1.19.jar:/opt/flink/lib/flink-connector-kafka-3.2.0-1.19.jar:ro
+      - ./lib/kafka/kafka-clients-3.8.0.jar:/opt/flink/lib/kafka-clients-3.8.0.jar:ro
     # depends_on: 
     #   jobmanager:
     #     condition: service_healthy
-    deploy:
-      resources:
-        limits:
-          memory: 256m
-          cpus: '0.5'
+    # deploy:
+    #   resources:
+    #     limits:
+    #       # 内存太小会导致无法解析json错误, 提示没有getter setter方法，莫名其妙
+    #       memory: 256m
+    #       cpus: '0.5'

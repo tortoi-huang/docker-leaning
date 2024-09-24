@@ -3,6 +3,14 @@ kafka flink mysql 测试集群
 
 ## 启动和关闭集群
 ```bash
+# 下载安装s3 jar依赖
+mkdir -p lib/s3 lib/kafka
+wget -O lib/s3/flink-s3-fs-hadoop-1.20.0.jar https://repo1.maven.org/maven2/org/apache/flink/flink-s3-fs-hadoop/1.20.0/flink-s3-fs-hadoop-1.20.0.jar
+
+wget -O lib/kafka/flink-connector-kafka-3.2.0-1.19.jar https://repo1.maven.org/maven2/org/apache/flink/flink-connector-kafka/3.2.0-1.19/flink-connector-kafka-3.2.0-1.19.jar
+
+wget -O lib/kafka/kafka-clients-3.8.0.jar https://repo1.maven.org/maven2/org/apache/kafka/kafka-clients/3.8.0/kafka-clients-3.8.0.jar
+
 # 启动集群
 sudo sudo docker compose up -d
 # 关闭集群并删除所有数据
@@ -81,9 +89,9 @@ sudo docker exec -it broker0 /opt/bitnami/kafka/bin/kafka-topics.sh --create --b
 
 # 发送消息
 sudo docker exec -it broker0 sh -c '/opt/bitnami/kafka/bin/kafka-console-producer.sh --bootstrap-server broker0:9092 --topic test1 --property parse.key=true --property key.separator== acks=all <<"EOF"
-file1=If you get stuck, check out our community support resources. In particular, Apache Flink’s user mailing list is consistently ranked as one of the most active of any Apache project, and is a great way to get help quickly.
-file2=The out of the box configuration will use your default Java installation. You can manually set the environment variable JAVA_HOME or the configuration key env.java.home in Flink configuration file if you want to manually override the Java runtime to use. Note that the configuration key env.java.home must be specified in a flattened format (i.e. one-line key-value format) in the configuration file.
-file3=You can specify a different configuration directory location by defining the FLINK_CONF_DIR environment variable. For resource providers which provide non-session deployments, you can specify per-job configurations this way. Make a copy of the conf directory from the Flink distribution and modify the settings on a per-job basis. Note that this is not supported in Docker or standalone Kubernetes deployments. On Docker-based deployments, you can use the FLINK_PROPERTIES environment variable for passing configuration values.
+file1={"userId": 1, "itemId": 100000, "behavior": "hello world"}
+file2={"userId": 2, "itemId": 100001, "behavior": "user name2"}
+file3={"userId": 3, "itemId": 100002, "behavior": "behavior test"}
 EOF'
 
 # 消费消息
@@ -93,8 +101,10 @@ sudo docker exec -it broker0 /opt/bitnami/kafka/bin/kafka-console-consumer.sh --
 export sg_sid=$(curl -X POST http://localhost:8083/v3/sessions|jq -r '.sessionHandle')
 echo $sg_sid
 
-# 提交 flink sql 任务
-curl -X POST http://localhost:8083/v3/sessions/$sg_sid/statements --data '{"statement": "select 2"}'
+# TODO 测试没通过，提交 flink sql 任务
+curl -XPOST -H "Content-type: application/json" -d $'{
+  "statement": "CREATE TABLE KafkaTable (\\n  `kfk_key` STRING,\\n  `user_id` BIGINT,\\n  `item_id` BIGINT,\\n  `behavior` STRING,\\n  `ts` TIMESTAMP(3) METADATA FROM \'timestamp\'\\n) WITH (\\n  \'connector\' = \'kafka\',\\n  \'topic\' = \'test1\',\\n  \'properties.bootstrap.servers\' = \'broker0:9092,broker1:9092\',\\n  \'properties.group.id\' = \'flinkGroup\',\\n  \'scan.startup.mode\' = \'earliest-offset\',\\n  \'format\' = \'json\',\\n  \'key.fields\' = \'kfk_key\'\\n)"
+}' http://localhost:8083/v3/sessions/$sg_sid/statements
 ```
 
 ## 总结
