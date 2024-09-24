@@ -104,7 +104,7 @@ services:
     hostname: sql-gateway
     ports:
       - "8083:8083"
-      
+
   mariadb:
     container_name: mariadb
     hostname: mariadb
@@ -114,6 +114,50 @@ services:
     # 默认数据目录 /var/lib/mysql
     volumes: 
       - mariadb_data:/var/lib/mysql
+    networks: 
+      - flink-cluster
+
+  minio:
+    container_name: minio
+    hostname: minio
+    image: quay.io/minio/minio:RELEASE.2024-09-13T20-26-02Z
+    command: 
+      - server
+      - /data
+      - --console-address
+      - ":9001"
+    environment:
+      MINIO_ROOT_USER: ROOTNAME
+      MINIO_ROOT_PASSWORD: CHANGEME123
+      # 可以配置所有环境变量到文件 /etc/config.env
+      # MINIO_CONFIG_ENV_FILE: /etc/default/minio/config.env
+    # 默认数据目录 /var/lib/mysql
+    # volumes: 
+    #   - ./data/minio/data:/data
+    ports:
+      # s3 端口
+      - "9000:9000"
+      # webui 端口
+      - "9001:9001"
+    healthcheck:
+      test: 
+        - "CMD"
+        - "curl"
+        - "-I"
+        - "http://localhost:9001/minio/health/live"
+    networks: 
+      - flink-cluster
+
+  minio-mc:
+    image: quay.io/minio/mc:RELEASE.2024-09-16T17-43-14Z
+    container_name: mc
+    # 其中 myminio 为在客户端为集群服务器取的别名
+    entrypoint: /init_bucket.sh
+    volumes: 
+      - ./conf/minio/init_bucket.sh:/init_bucket.sh
+    depends_on:
+      minio:
+        condition: service_healthy
     networks: 
       - flink-cluster
 

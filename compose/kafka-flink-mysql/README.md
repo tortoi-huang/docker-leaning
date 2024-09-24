@@ -43,6 +43,9 @@ insert into test_db(my_name) values ('hello'),('world');
 select * from test_db;
 ```
 
+### 测试 minio
+下载 aws 的 s3 browers 配置s3 选 s3 compatible account， ssl为false， endpoints为 localhost:9000, 可以正确连接到 minio 查询和创建 bucket
+
 ### 测试 flink
 ```bash
 bash -c 'sudo docker exec -it jobmgr curl http://localhost:8081/config'|jq

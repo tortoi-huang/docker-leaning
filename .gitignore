@@ -69,3 +69,5 @@ compose/doris/data
 compose/doris/img/temp
 
 compose/kafka_native/data
+
+compose/kafka-flink-mysql/data

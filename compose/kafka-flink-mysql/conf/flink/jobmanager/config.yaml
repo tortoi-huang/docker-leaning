@@ -100,7 +100,16 @@ state:
   backend: rocksdb
   # jobmanager or filesystem
   checkpoint-storage: jobmanager
-  # checkpoints:
-  #   dir: s3://storage
-  # savepoints:
-  #   dir: s3://storage
+  checkpoints:
+    dir: s3://flink/checkpoints
+  savepoints:
+    dir: s3://flink/savepoints
+s3:
+  access-key: o4dCEAoZ776kFGh7QcbZ
+  secret-key: MJdMWfCQnMk9cYex43WaJtXKVzupXfU2VnjjpNOe
+  ssl: 
+    enabled: false
+  path:
+    style:
+      access: true
+  endpoint: minio:9000
