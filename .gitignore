@@ -72,3 +72,5 @@ compose/kafka_native/data
 
 compose/kafka-flink-mysql/data
 compose/kafka-flink-mysql/lib
+
+compose/jenkins/data

@@ -1,0 +1,84 @@
+version: "3.8" 
+
+services:
+  postgres:
+    image: 'postgres:17'
+    hostname: postgres
+    container_name: postgres
+    environment:
+      # user 和 role 是一个意思, 如果这里不是 root 则启动后会有没有 root role 的告警
+      POSTGRES_USER: root
+      # POSTGRES_HOST_AUTH_METHOD 或者 POSTGRES_PASSWORD 必选一个, 前者意思是在本地登录不需要密码
+      POSTGRES_HOST_AUTH_METHOD: trust
+      # POSTGRES_PASSWORD: pwd123
+      # POSTGRES_DB: bitbucket
+      # 修改默认数据存储位置，默认是 /var/lib/postgresql/data
+      # PGDATA: /var/lib/postgresql/data
+    volumes: 
+      - postgres_data:/var/lib/postgresql/data
+      # 初始化脚本
+      - ./config/pginit.sh:/docker-entrypoint-initdb.d/init-user-db.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: 
+      - cicd
+
+  bitbucket:
+    # image: 'atlassian/bitbucket:8.17.1-ubuntu-jdk17'
+    image: 'prepend2/bitbucket-server:6.10'
+    hostname: bitbucket
+    container_name: bitbucket
+    environment:
+      JDBC_DRIVER: org.postgresql.Driver
+      JDBC_USER: bitbucket
+      JDBC_PASSWORD: pwd123
+      JDBC_URL: jdbc:postgresql://postgres:5432/bitbucket
+    ports:
+      # web 端口
+      - "7990:7990"
+      # - "7999:7999"
+    volumes:
+      - bitbucket:/var/atlassian/application-data/bitbucket
+    networks: 
+      - cicd
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  jenkins:
+    image: jenkins/jenkins:lts-jdk17
+    hostname: jenkins
+    container_name: jenkins
+    ports:
+      - "8080:8080"
+    volumes:
+      - jenkins_data:/var/jenkins_home
+
+
+networks:
+  cicd: 
+    driver: bridge
+    name: cicd
+
+volumes:
+  bitbucket:
+    driver: local
+    driver_opts: 
+      type: 'none'
+      o: 'bind'
+      device: './data/bitbucket'
+  postgres_data:
+    driver: local
+    driver_opts: 
+      type: 'none'
+      o: 'bind'
+      device: './data/pg'
+  jenkins_data:
+    driver: local
+    driver_opts: 
+      type: 'none'
+      o: 'bind'
+      device: './data/jenkins'
