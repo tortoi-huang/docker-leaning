@@ -74,3 +74,5 @@ compose/kafka-flink-mysql/data
 compose/kafka-flink-mysql/lib
 
 compose/jenkins/data
+
+docker/user/data/*.txt
