@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
-echo "exec entrypoint config on run"
 
+echo "exec entrypoint config on dockerfile"
 echo "whoami: $(whoami)"
 temp_user=$(whoami)
 echo "id: $(id)"
