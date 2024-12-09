@@ -1,0 +1,21 @@
+version: '3.6'
+services:
+  gitlab:
+    image: gitlab/gitlab-ce:17.4.5-ce.0
+    container_name: gitlab
+    restart: always
+    hostname: 'gitlab.lo-wsl'
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        # Add any other gitlab.rb configuration here, each on its own line
+        external_url 'https://gitlab.lo-wsl'
+    ports:
+      - '8080:80'
+      - '8443:443'
+      - '2222:22'
+    volumes:
+      - './config:/etc/gitlab'
+      - '.data/logs:/var/log/gitlab'
+      - '.data/data:/var/opt/gitlab'
+    shm_size: '256m'
+

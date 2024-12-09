@@ -1,0 +1,77 @@
+# version: "3.8"
+services:
+
+  busybox:
+    # busybox 的镜像在 dockerfile 中没有指定用户
+    image: 'busybox'
+    entrypoint: 
+      - /data/user-info.sh
+      # - sh
+      # - -c
+      # - sleep 999d
+    environment:
+      - ENV_FILE=busybox
+    container_name: busybox
+    volumes: 
+      - localdir:/data
+      - volume1:/data2
+
+  gradle1:
+    # gradle 的镜像在 dockerfile 中指定了用户名 USER gradle
+    image: 'gradle:8.11.1-jdk17'
+    entrypoint:  
+      - /data/user-info.sh
+    container_name: gradle1
+    environment:
+      - ENV_FILE=gradle1
+    volumes: 
+      - localdir:/data
+      - volume1:/data2
+
+  gradle2:
+    # gradle 的镜像在 dockerfile 中指定了用户名 USER gradle
+    image: 'gradle:8.11.1-jdk17'
+    user: gradle
+    entrypoint:  
+      - /data/user-info.sh
+    container_name: gradle2
+    environment:
+      - ENV_FILE=gradle2
+    volumes: 
+      - localdir:/data
+      - volume1:/data2
+
+  # bitnami 的镜像在 dockerfile 中指定了用户id USER 1001
+  # 没有指定用户名和id
+  tomcat1:
+    image: 'bitnami/tomcat'
+    container_name: tomcat1
+    entrypoint:  
+      - /data/user-info.sh
+    environment:
+      - ENV_FILE=tomcat1
+    volumes: 
+      - localdir:/data
+      - volume1:/data2
+
+  # 指定用户用户名
+  tomcat2:
+    image: 'bitnami/tomcat'
+    user: root
+    container_name: tomcat2
+    entrypoint:  
+      - /data/user-info.sh
+    environment:
+      - ENV_FILE=tomcat2
+    volumes: 
+      - localdir:/data
+      - volume1:/data2
+
+volumes:
+  localdir:
+    driver: local
+    driver_opts: 
+      type: 'none'
+      o: 'bind'
+      device: './data'
+  volume1:
