@@ -7,10 +7,19 @@
 
 # 确保在 config.json 目录执行, test-app 是容器id 随意命名
 sudo runc run test-app
+# 上述运行完成后会退出容器， -d参数表示容器不会退出, 使用-d参数才需要后续清理动作
+# sudo runc run -d test-app
+
+# 查看正在运行的容器
+sudo runc list
+# 终止容器
+sudo runc kill test-app SIGTERM
+# 删除容器
+sudo runc delete test-app
 ```
 
 # TODO
-1. 容器连接宿主网络, runc 没有网络功能，通过删除 config.json中的 linux.namespaces 下的network, 使得容器不在独立网络空间, 共享主机网络, 或者先在主机创建网络 nat 网络，并将请求转发到容器网络空间
+1. 容器连接宿主网络, runc 没有网络功能，通过删除 config.json中的 linux.namespaces 下的network, 使得容器不在独立网络空间, 共享主机网络, 或者先在主机创建网络 nat 网络，并配置iptable将请求转发到容器网络空间
 2. 使用 overlayFS 对容器文件系统进行分层, 目前只有一层。 大部分容器中通过overlayFS生成最终的 rootfs。
 
 # 问题
