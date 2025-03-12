@@ -2,9 +2,12 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net"
+	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 )
 
 func main() {
@@ -49,6 +52,16 @@ func main() {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "错误: %v\n", err)
 		os.Exit(1)
+	}
+
+	http.HandleFunc("/", handler)
+	port := getPort()
+	addr := ":" + port
+	fmt.Printf("服务器启动，监听在 http://localhost%s\n", addr)
+
+	err = http.ListenAndServe(addr, nil)
+	if err != nil {
+		log.Fatalf("服务器启动失败: %v", err)
 	}
 }
 
@@ -103,4 +116,31 @@ func printDir(dirPath string, prefix string, depth int, maxDepth int) error {
 	}
 
 	return nil
+}
+
+func handler(w http.ResponseWriter, r *http.Request) {
+	// 设置响应状态码为 200 OK（默认值，可省略）
+	w.WriteHeader(http.StatusOK)
+	// 设置响应内容类型为纯文本
+	w.Header().Set("Content-Type", "text/plain")
+	// 向客户端写入 "Hello, World!"
+	_, err := fmt.Fprintf(w, "Hello, World!")
+	if err != nil {
+		log.Printf("写入响应失败: %v", err)
+	}
+}
+
+func getPort() string {
+	port := os.Getenv("APP_PORT")
+	if port == "" {
+		return "8080" // 未设置环境变量时使用默认值
+	}
+
+	// 验证端口号是否为有效整数且在合理范围内
+	if p, err := strconv.Atoi(port); err != nil || p < 1 || p > 65535 {
+		log.Printf("无效的端口号 %s，使用默认端口 8080", port)
+		return "8080"
+	}
+
+	return port
 }

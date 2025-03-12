@@ -1,4 +1,28 @@
-# 示例程序
+# 创建网络空间
+如果没有手动创建网络空间 runc 会自动创建一个临时网络空间，该空间无法通过 sudo ip netns list 看到, 因为 list 指令只能看到持久化的网络空间
+
+```bash
+# 创建网络空间
+sudo ip netns add test-app-ns
+# 查看网络空间
+sudo ip netns list
+sudo ls /var/run/netns/
+# runc 所运行的进程使用的网络空间
+# sudo ls /proc/{pid}/ns
+
+```
+
+# 配置网络访问
+使用 cni 创建一个 bridge 的 nat 网络
+```bash
+sudo CNI_COMMAND=ADD CNI_CONTAINERID=test-app-ns CNI_NETNS=/var/run/netns/test-app-ns CNI_IFNAME=eth0 CNI_PATH=/opt/cni/bin /opt/cni/bin/bridge < 10-runc-cni.conf
+# 删除桥接网络
+# sudo CNI_COMMAND=DEL CNI_CONTAINERID=test-app-ns CNI_NETNS=/var/run/netns/test-app-ns CNI_IFNAME=eth0 CNI_PATH=/opt/cni/bin /opt/cni/bin/bridge < 10-runc-cni.conf
+
+sudo ip netns exec test-app-ns ip addr
+```
+
+# runc 容器
 ```bash
 # 初始化 OCI Bundle, 就是生成模板文件 config.json
 # runc spec
@@ -12,6 +36,7 @@ sudo runc run test-app
 
 # 查看正在运行的容器
 sudo runc list
+sudo runc state test-app
 # 终止容器, 本例中程序不是服务类程序，运行完就自动终止，不需要此项
 # sudo runc kill test-app SIGTERM
 # 删除容器
