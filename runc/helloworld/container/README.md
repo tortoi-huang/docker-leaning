@@ -7,13 +7,13 @@
 
 # 确保在 config.json 目录执行, test-app 是容器id 随意命名
 sudo runc run test-app
-# 上述运行完成后会退出容器， -d参数表示容器不会退出, 使用-d参数才需要后续清理动作
+# 上述运行完成后会退出容器， -d 参数表示容器不会退出, 使用 -d 参数才需要后续清理动作, process.terminal=false 才能启用 -d, 终端输出输出需要重定向到文件，否则会丢失
 # sudo runc run -d test-app
 
 # 查看正在运行的容器
 sudo runc list
-# 终止容器
-sudo runc kill test-app SIGTERM
+# 终止容器, 本例中程序不是服务类程序，运行完就自动终止，不需要此项
+# sudo runc kill test-app SIGTERM
 # 删除容器
 sudo runc delete test-app
 ```

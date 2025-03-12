@@ -78,3 +78,5 @@ compose/jenkins/data
 docker/user/data/*.txt
 
 runc/helloworld/app/app
+runc/helloworld/container/rootfs/app
+runc/helloworld/container/rootfs/*

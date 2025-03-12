@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"path/filepath"
 )
 
 func main() {
@@ -41,4 +42,65 @@ func main() {
 			fmt.Println("  IP地址:", addr)
 		}
 	}
+
+	root := "/"
+	fmt.Println(root)
+	err = printDir(root, "", 0, 1) // maxDepth=1 表示两级（根目录+一级子目录）
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "错误: %v\n", err)
+		os.Exit(1)
+	}
+}
+
+func printDir(dirPath string, prefix string, depth int, maxDepth int) error {
+	// 打开目录
+	dir, err := os.Open(dirPath)
+	if err != nil {
+		return fmt.Errorf("无法打开目录 %s: %v", dirPath, err)
+	}
+	defer dir.Close()
+
+	// 读取目录内容
+	entries, err := dir.Readdir(-1)
+	if err != nil {
+		return fmt.Errorf("无法读取目录 %s: %v", dirPath, err)
+	}
+
+	// 遍历目录项
+	for i, entry := range entries {
+		// 构建当前项的完整路径
+		fullPath := filepath.Join(dirPath, entry.Name())
+
+		// 判断是否为最后一项，用于调整前缀
+		isLast := i == len(entries)-1
+		currentPrefix := prefix
+		if depth > 0 {
+			if isLast {
+				currentPrefix += "└── "
+			} else {
+				currentPrefix += "├── "
+			}
+		}
+
+		// 打印当前项
+		fmt.Printf("%s%s\n", currentPrefix, entry.Name())
+
+		// 如果是目录且未达到最大深度，递归打印
+		if entry.IsDir() && depth < maxDepth {
+			newPrefix := prefix
+			if depth > 0 {
+				if isLast {
+					newPrefix += "    "
+				} else {
+					newPrefix += "│   "
+				}
+			}
+			err := printDir(fullPath, newPrefix, depth+1, maxDepth)
+			if err != nil {
+				fmt.Printf("错误: %v\n", err)
+			}
+		}
+	}
+
+	return nil
 }

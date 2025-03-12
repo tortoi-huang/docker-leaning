@@ -1,7 +1,7 @@
 {
 	"ociVersion": "1.0.2-dev",
 	"process": {
-		"terminal": true,
+		"terminal": false,
 		"user": {
 			"uid": 0,
 			"gid": 0
@@ -49,7 +49,7 @@
 	},
 	"root": {
 		"path": "rootfs",
-		"readonly": false
+		"readonly": true
 	},
 	"hostname": "runc-app",
 	"mounts": [
