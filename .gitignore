@@ -80,3 +80,5 @@ docker/user/data/*.txt
 runc/helloworld/app/app
 runc/helloworld/container/rootfs/app
 runc/helloworld/container/rootfs/*
+runc/helloworld/container/save-test-app/*
+runc/helloworld/container/*.tar

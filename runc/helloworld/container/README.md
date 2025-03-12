@@ -18,6 +18,33 @@ sudo runc list
 sudo runc delete test-app
 ```
 
+# 打包 docker 镜像
+将目录 rootfs 打包为 docker 镜像
+```bash
+# 打包镜像tar, -C rootfs: Change dir to rootfs
+tar -C rootfs -cvf test-app.tar --exclude='./proc' --exclude='./sys' --exclude='./dev' --exclude='./.gitkeep' .
+# 查看内容
+tar -tvf test-app.tar
+
+# 导入镜像, 用 import 导入新镜像,会创建新的层id和镜像id, 不用load, 因为没有层id和镜像id, 需要指定包含点(.)的镜像名前缀, 否则会自动加上 localhost 前缀
+docker import test-app.tar helloworld.com/test-app:latest
+
+# 运行镜像
+docker run --rm helloworld.com/test-app /app
+
+# 导出镜像查看
+docker save -o save-test-app.tar helloworld.com/test-app
+mkdir save-test-app
+tar -xvf save-test-app.tar -C save-test-app
+# 查看其中唯一的层中的文件
+find save-test-app -type f -name "*.tar" -print -quit | xargs tar -tvf 
+
+# 清理
+docker rmi helloworld.com/test-app
+rm save-test-app.tar test-app.tar
+rm -rf save-test-app
+```
+
 # TODO
 1. 容器连接宿主网络, runc 没有网络功能，通过删除 config.json中的 linux.namespaces 下的network, 使得容器不在独立网络空间, 共享主机网络, 或者先在主机创建网络 nat 网络，并配置iptable将请求转发到容器网络空间
 2. 使用 overlayFS 对容器文件系统进行分层, 目前只有一层。 大部分容器中通过overlayFS生成最终的 rootfs。
