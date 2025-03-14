@@ -98,7 +98,7 @@ rm -rf save-test-app
 ```
 
 # TODO
-1. 容器连接宿主网络, runc 没有网络功能，通过删除 config.json中的 linux.namespaces 下的network, 使得容器不在独立网络空间, 共享主机网络, 或者先在主机创建网络 nat 网络，并配置iptable将请求转发到容器网络空间
+1. 无法在宿主机上的8090端口映射到容器的8080端口
 2. 使用 overlayFS 对容器文件系统进行分层, 目前只有一层。 大部分容器中通过overlayFS生成最终的 rootfs。
 
 # 问题

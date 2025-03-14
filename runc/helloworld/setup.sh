@@ -19,5 +19,5 @@ CNI_PATH=/opt/cni/bin cnitool add runc /var/run/netns/test-app-ns
 
 echo "created cni bridge network"
 
-runc run -b $dir/container test-app
+runc run -d -b $dir/container test-app
 echo "created runc container"
