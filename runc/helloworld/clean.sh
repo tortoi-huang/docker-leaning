@@ -2,17 +2,20 @@
 
 # set -e
 dir=$(dirname $0)
+dir=$(readlink -f "$dir")
 
 runc kill test-app SIGTERM
 runc delete test-app
 echo "deleted runc container"
 
-CNI_COMMAND=DEL CNI_CONTAINERID=test-app-ns CNI_NETNS=/var/run/netns/test-app-ns CNI_IFNAME=eth0 CNI_PATH=/opt/cni/bin \
-    /opt/cni/bin/bridge < $dir/container/10-runc-cni.conf
+CNI_PATH=/opt/cni/bin cnitool del runc /var/run/netns/test-app-ns
+sudo rm /etc/cni/net.d/10-runc-cni.conflist
 echo "deleted cni bridge network"
 
-sudo ip netns delete test-app-ns
+ip netns delete test-app-ns
+ip link delete runc0
+rm -rf /var/lib/cni/networks/runc
 echo "deleted network namespace"
 
-rm $dir/container/rootfs/app
-echo "deleted go app"
+# rm $dir/container/rootfs/app
+# echo "deleted go app"

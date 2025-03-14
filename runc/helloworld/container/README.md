@@ -1,3 +1,18 @@
+# 环境准备
+## 安装 go
+## 安装 cni plugin
+```bash
+sudo mkdir -p /opt/cni/bin
+
+wget -qO- https://github.com/containernetworking/plugins/releases/download/v1.6.2/cni-plugins-linux-amd64-v1.6.2.tgz | sudo tar -C /opt/cni/bin -xvz 
+# export CNI_PATH=/opt/cni/bin
+```
+## 安装 cni tool
+```bash
+go install github.com/containernetworking/cni/cnitool@v1.2.3
+# sudo cp ~/go/bin/cnitool /opt/cni/bin/
+# ln -s /opt/cni/bin/cnitool /usr/local/bin/cnitool
+```
 # 创建网络空间
 如果没有手动创建网络空间 runc 会自动创建一个临时网络空间，该空间无法通过 sudo ip netns list 看到, 因为 list 指令只能看到持久化的网络空间
 
@@ -15,9 +30,18 @@ sudo ls /var/run/netns/
 # 配置网络访问
 使用 cni 创建一个 bridge 的 nat 网络
 ```bash
-sudo CNI_COMMAND=ADD CNI_CONTAINERID=test-app-ns CNI_NETNS=/var/run/netns/test-app-ns CNI_IFNAME=eth0 CNI_PATH=/opt/cni/bin /opt/cni/bin/bridge < 10-runc-cni.conf
+
+# /opt/cni/bin/bridge 不能添加多插件配置
+# sudo CNI_COMMAND=ADD CNI_CONTAINERID=test-app-ns CNI_NETNS=/var/run/netns/test-app-ns CNI_IFNAME=eth0 CNI_PATH=/opt/cni/bin /opt/cni/bin/bridge < 10-runc-cni.conf
 # 删除桥接网络
 # sudo CNI_COMMAND=DEL CNI_CONTAINERID=test-app-ns CNI_NETNS=/var/run/netns/test-app-ns CNI_IFNAME=eth0 CNI_PATH=/opt/cni/bin /opt/cni/bin/bridge < 10-runc-cni.conf
+
+# 多插件配置需要使用 /opt/cni/bin cnitool
+# add 后面的参数runc需要和配置文件中的name属性一致, 需要将配置文件复制到目录/etc/cni/net.d/
+sudo cp 10-runc-cni.conflist /etc/cni/net.d/
+sudo CNI_PATH=/opt/cni/bin cnitool add runc /var/run/netns/test-app-ns
+# sudo CNI_PATH=/opt/cni/bin cnitool del runc /var/run/netns/test-app-ns
+# sudo rm /etc/cni/net.d/10-runc-cni.conflist
 
 sudo ip netns exec test-app-ns ip addr
 ```
@@ -37,6 +61,9 @@ sudo runc run test-app
 # 查看正在运行的容器
 sudo runc list
 sudo runc state test-app
+
+sudo ip netns exec test-app-ns ip addr
+
 # 终止容器, 本例中程序不是服务类程序，运行完就自动终止，不需要此项
 # sudo runc kill test-app SIGTERM
 # 删除容器
@@ -85,4 +112,15 @@ cd ../app
 CGO_ENABLED=0 go build app.go
 cd -
 cp ../app/app ./rootfs/
+```
+2. 如何确认runc容器使用哪个网络命名空间？通常 runc会创建以一个临时的网络命名空间，无法使用 sudo ip netns list, 可以在 配置文件 linux.namespaces中网络的元素中指定 使用已有的网络命名空间的path，
+查看已有容器是否运行在指定网络命名空间
+```bash
+# 查看 pid
+sudo runc state test-app
+# 这里会显示进程使用的网络命名空间文件的inode
+sudo ls -al /proc/<PID>/ns/net
+
+# 查看已经存在的网络命名空间的 inode
+sudo ls -ali /var/run/netns/
 ```
