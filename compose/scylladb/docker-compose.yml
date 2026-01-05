@@ -1,0 +1,100 @@
+version: '3'
+
+x-scylla-templ: &scylla-templ
+  image: scylladb/scylla:2025.2
+  # command: --seeds=scylla1,scylla2,scylla3
+  # user: "${UID}:${GID}"
+  healthcheck:
+    test: ["CMD", "curl", "-f", "http://127.0.0.1:10000/storage_service/native_transport"]
+    interval: 10s
+    timeout: 3s
+    retries: 6
+    start_period: 60s
+
+  networks: 
+    - scylla-cluster
+  
+  # 不设置会导致性能警告
+  security_opt:
+    - seccomp:unconfined
+
+  ulimits:
+    nofile:
+      soft: 100000
+      hard: 100000
+
+
+services:
+  scylla1:
+    << : *scylla-templ
+    container_name: scylla1
+    hostname: scylla1
+    command: >
+      --smp 4
+      --memory 8G
+      --seeds=scylla1,scylla2
+      --broadcast-address scylla1
+      --broadcast-rpc-address scylla1
+      --developer-mode 1
+    volumes: 
+      - scylla1:/var/lib/scylla
+      - ./config/scylla.yaml:/etc/scylla/scylla.yaml:ro
+      - /etc/localtime:/etc/localtime:ro
+
+  scylla2:
+    << : *scylla-templ
+    container_name: scylla2
+    hostname: scylla2
+    command: >
+      --smp 4
+      --memory 8G
+      --seeds=scylla1,scylla2
+      --broadcast-address scylla2
+      --broadcast-rpc-address scylla2
+      --developer-mode 1
+    volumes: 
+      - scylla2:/var/lib/scylla
+      - ./config/scylla.yaml:/etc/scylla/scylla.yaml:ro
+      - /etc/localtime:/etc/localtime:ro
+
+  scylla3:
+    << : *scylla-templ
+    container_name: scylla3
+    hostname: scylla3
+    command: >
+      --smp 4
+      --memory 8G
+      --seeds=scylla1,scylla2
+      --broadcast-address scylla3
+      --broadcast-rpc-address scylla3
+      --developer-mode 1
+    volumes: 
+      - scylla3:/var/lib/scylla
+      - ./config/scylla.yaml:/etc/scylla/scylla.yaml:ro
+      - /etc/localtime:/etc/localtime:ro
+
+volumes:
+  scylla1: &vol-templ
+    driver: local
+    driver_opts:  &vol-driver-templ
+      type: 'none'
+      o: 'bind'
+      device: './data/scylla1'
+  scylla2: 
+    <<: *vol-templ
+    driver_opts:  
+      <<: *vol-driver-templ
+      device: './data/scylla2'
+  scylla3: 
+    <<: *vol-templ
+    driver_opts:  
+      <<: *vol-driver-templ
+      device: './data/scylla3'
+
+networks:
+  scylla-cluster: 
+    name: scylla-net
+    ipam:
+      driver: default
+      config: 
+        - subnet: 192.168.96.0/20
