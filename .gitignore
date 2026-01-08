@@ -48,6 +48,8 @@ runc/helloworld/container/save-test-app/*
 runc/helloworld/container/*.tar
 
 compose/scylladb/data/*/**
+compose/milvus/data/*/**
+compose/debezium/oracle/data/*/**
 
 # 全局不忽略，需要写在最后， gitignore 会按行的顺序执行
 !.gitkeep

@@ -1,0 +1,72 @@
+services:
+  # kafka:
+  #   image: apache/kafka:4.1.1
+  #   container_name: kafka
+  #   depends_on:
+  #     - zookeeper
+  #   environment:
+  #     - ZOOKEEPER_CONNECT=zookeeper:2181
+  #     - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9092
+  #     - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+  #     - KAFKA_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+  #     - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+  #   ports:
+  #     - "9092:9092"
+
+  # connect:
+  #   image: quay.io/debezium/connect:latest
+  #   container_name: connect
+  #   depends_on:
+  #     - kafka
+  #   environment:
+  #     - BOOTSTRAP_SERVERS=kafka:9092
+  #     - GROUP_ID=debezium-oracle-group
+  #     - CONFIG_STORAGE_TOPIC=debezium-configs
+  #     - OFFSET_STORAGE_TOPIC=debezium-offsets
+  #     - STATUS_STORAGE_TOPIC=debezium-status
+  #     - KEY_CONVERTER=org.apache.kafka.connect.json.JsonConverter
+  #     - VALUE_CONVERTER=org.apache.kafka.connect.json.JsonConverter
+  #     - KEY_CONVERTER_SCHEMAS_ENABLE=false
+  #     - VALUE_CONVERTER_SCHEMAS_ENABLE=false
+  #     - ENABLE_APICURIO_CONVERTERS=false
+  #     - REST_ADVERTISED_HOST_NAME=connect
+  #     - KAFKA_HEAP_OPTS=-Xms512m -Xmx1g
+  #     - JAVA_TOOL_OPTIONS=-Dlog4j2.formatMsgNoLookups=true
+  #   ports:
+  #     - "8083:8083"
+  #   volumes:
+  #     - ./jdbc:/kafka/connect
+
+  oracle:
+    image: gvenzl/oracle-xe:21.3.0
+    container_name: oracle-xe
+    environment:
+      # 用户 SYS 和 SYSTEM 的密码
+      - ORACLE_PASSWORD=Oradoc_db1
+      - ORACLE_CHARACTERSET=AL32UTF8
+      - APP_USER=appuser
+      - APP_USER_PASSWORD=app@123
+    ports:
+      - "1521:1521"
+    volumes:
+      # Persist data
+      - oracle-data:/opt/oracle/oradata
+      # 数据库初始化脚本，创建时执行一次
+      - ./config/entrypoint-initdb:/container-entrypoint-initdb.d:ro
+      # 数据库启动脚本，每次启动时执行
+      - ./config/entrypoint-startdb:/container-entrypoint-startdb.d:ro
+    healthcheck:
+      # healthcheck.sh 的第1个参数可指定要检测的 PDB 名称；不传则使用 ORACLE_DATABASE 或默认 XEPDB1
+      test: ["CMD", "/opt/oracle/healthcheck.sh", "XEPDB1"]
+      interval: 15s
+      timeout: 10s
+      retries: 30
+      start_period: 90s
+
+volumes:
+  oracle-data:
+    driver: local
+    driver_opts:  &vol-driver-templ
+      type: 'none'
+      o: 'bind'
+      device: './data/oradata'
