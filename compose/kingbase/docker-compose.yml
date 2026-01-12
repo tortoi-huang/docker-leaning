@@ -1,0 +1,32 @@
+services:
+  kingbase: 
+    build:
+      context: ./image
+      dockerfile: Dockerfile
+    image: huang/kingbase:9.1.10
+    pull_policy: never
+    container_name: kingbase
+    hostname: kingbase
+    environment:
+      KBASE_PASSWORD: Kb@1234
+    volumes: 
+      - kingbase_data:/data/kingbase/data
+    ports:
+      - "54321:54321"
+    networks: 
+      - kingbase-net
+
+networks:
+  kingbase-net: 
+    name: kingbase-net
+    # ipam:
+    #   driver: default
+    #   config: 
+    #     - subnet: 192.168.64.0/20
+volumes:
+  kingbase_data:
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: './data/kingbase'
