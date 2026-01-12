@@ -1,0 +1,41 @@
+services:
+
+  oracle:
+    image: gvenzl/oracle-xe:21.3.0
+    container_name: oracle-xe
+    environment:
+      # 用户 SYS 和 SYSTEM 的密码
+      - ORACLE_PASSWORD=Oradoc_db1
+      - ORACLE_CHARACTERSET=AL32UTF8
+      - APP_USER=appuser
+      - APP_USER_PASSWORD=app@123
+    ports:
+      - "1521:1521"
+    volumes:
+      # Persist data
+      - oracle-data:/opt/oracle/oradata
+      # 数据库初始化脚本，创建时执行一次
+      - ./config/entrypoint-initdb:/container-entrypoint-initdb.d:ro
+      # 数据库启动脚本，每次启动时执行
+      - ./config/entrypoint-startdb:/container-entrypoint-startdb.d:ro
+    healthcheck:
+      # healthcheck.sh 的第1个参数可指定要检测的 PDB 名称；不传则使用 ORACLE_DATABASE 或默认 XEPDB1
+      test: ["CMD", "/opt/oracle/healthcheck.sh", "XEPDB1"]
+      interval: 15s
+      timeout: 10s
+      retries: 30
+      start_period: 90s
+    networks: 
+      - oracle-cdc
+
+volumes:
+  oracle-data:
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: './data/oradata'
+
+networks:
+  oracle-cdc: 
+    name: oracle-cdc
