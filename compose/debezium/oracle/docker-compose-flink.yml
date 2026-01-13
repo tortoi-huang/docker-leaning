@@ -1,0 +1,67 @@
+x-flink: &flink
+  image: flink:1.20.3-java17
+  networks: 
+    - oracle-cdc
+
+services:
+  jobmanager-temp:
+    <<: *flink
+    command: jobmanager
+    # environment: 
+    #   # flink 配置信息, 只会覆盖 confg.yaml 中的同名属性, 没有配置的属性依然会从 confg.yaml 读取, 不支持注释
+    #   FLINK_PROPERTIES: |-
+    #     jobmanager.rpc.address: jobmanager
+    #     taskmanager.numberOfTaskSlots: 2
+    volumes: 
+      - ./conf/flink/jobmanager/config.yaml:/opt/flink/conf/config.yaml:ro
+    healthcheck:
+      test:
+        - "CMD"
+        - "curl"
+        - "localhost:8081"
+    deploy:
+      resources:
+        limits:
+          memory: 1024m
+          cpus: '0.50'
+  
+  taskmanager-temp:
+    <<: *flink
+    command: taskmanager
+    # environment: 
+    #   FLINK_PROPERTIES: |-
+    #     jobmanager.rpc.address: jobmanager
+    #     taskmanager.numberOfTaskSlots: 2
+    volumes: 
+      - ./conf/flink/jobmanager/config.yaml:/opt/flink/conf/config.yaml:ro
+      - ./lib/flink-sql-connector-oracle-cdc-3.5.0.jar:/opt/flink/lib/flink-sql-connector-oracle-cdc-3.5.0.jar:ro
+      - ./lib/flink-sql-connector-postgres-cdc-3.5.0.jar:/opt/flink/lib/flink-sql-connector-postgres-cdc-3.5.0.jar:ro
+    depends_on: 
+      jobmanager:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 1024m
+          cpus: '1'
+  sql-gateway-temp:
+    <<: *flink
+    # entrypoint: /opt/flink/bin/sql-gateway.sh
+    command: 
+      - bin/sql-gateway.sh
+      - start-foreground
+      # rest.address 指向集群地址
+      - -Drest.address=jobmanager
+      - -Dsql-gateway.endpoint.rest.address=sql-gateway
+    volumes: 
+      - ./lib/kafka/flink-connector-kafka-3.2.0-1.19.jar:/opt/flink/lib/flink-connector-kafka-3.2.0-1.19.jar:ro
+      - ./lib/kafka/kafka-clients-3.8.0.jar:/opt/flink/lib/kafka-clients-3.8.0.jar:ro
+    # depends_on: 
+    #   jobmanager:
+    #     condition: service_healthy
+    # deploy:
+    #   resources:
+    #     limits:
+    #       # 内存太小会导致无法解析json错误, 提示没有getter setter方法，莫名其妙
+    #       memory: 256m
+    #       cpus: '0.5'
