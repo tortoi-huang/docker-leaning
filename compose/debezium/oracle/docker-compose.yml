@@ -40,11 +40,36 @@ services:
       - "54321:54321"
     networks: 
       - oracle-cdc
+  
+  jobmanager:
+    extends: 
+      file: docker-compose-flink.yml
+      service: jobmanager-temp
+    container_name: jobmgr
+    # 因为没有dns, task manager 需要通过 hostname 作为域名访问 jobmanager, 这里需要与 taskmanager 的配置参数 jobmanager.rpc.address 匹配
+    hostname: jobmanager
+    ports:
+      - "8081:8081"
+  
+  taskmanager0:
+    extends: 
+      file: docker-compose-flink.yml
+      service: taskmanager-temp
+    container_name: taskmgr0
+    hostname: taskmanager0
+  # sql-gateway:
+  #   extends: 
+  #     file: docker-compose-flink.yml
+  #     service: sql-gateway-temp
+  #   container_name: sql
+  #   hostname: sql-gateway
+  #   ports:
+  #     - "8083:8083"
 
 volumes:
   oracle-data:
     driver: local
-    driver_opts:  &vol-driver-templ
+    driver_opts:
       type: 'none'
       o: 'bind'
       device: './data/oradata'

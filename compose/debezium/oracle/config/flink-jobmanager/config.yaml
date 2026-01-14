@@ -82,6 +82,20 @@ jobmanager:
     #   max: 1G
     #   fraction: 128m
   bind-host: 0.0.0.0
+
+gateway:
+  # 启用 Web UI
+  endpoints:
+    - type: rest
+      port: 8083
+      address: 0.0.0.0
+      rest:
+        enabled: true
+        response-headers:
+          Access-Control-Allow-Origin: "*"
+        web-ui:
+          enabled: true  # 确保这是 true
+
 query:
   server:
     port: '6125'
@@ -96,25 +110,23 @@ env:
     opts:
       all: --add-exports=java.base/sun.net.util=ALL-UNNAMED --add-exports=java.rmi/sun.rmi.registry=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED --add-exports=java.security.jgss/sun.security.krb5=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.net=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.text=ALL-UNNAMED --add-opens=java.base/java.time=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.util.concurrent=ALL-UNNAMED --add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED --add-opens=java.base/java.util.concurrent.locks=ALL-UNNAMED
 
-execution:
-  checkpointing: 
-    # jobmanager or filesystem
-    storage: filesystem
-    dir: s3://flink/checkpoints
-    savepoint-dir: s3://flink/savepoints
-state:
-  backend: 
-    # hashmap or rocksdb
-    type: hashmap
-s3:
-  access-key: o4dCEAoZ776kFGh7QcbZ
-  secret-key: MJdMWfCQnMk9cYex43WaJtXKVzupXfU2VnjjpNOe
-  ssl: 
-    enabled: false
-  path:
-    style:
-      access: true
-  endpoint: minio:9000
+# execution:
+#   checkpointing: 
+#     storage: filesystem
+#     dir: s3://flink/checkpoints
+#     savepoint-dir: s3://flink/savepoints
+# state:
+#   backend: 
+#     type: hashmap
+# s3:
+#   access-key: o4dCEAoZ776kFGh7QcbZ
+#   secret-key: MJdMWfCQnMk9cYex43WaJtXKVzupXfU2VnjjpNOe
+#   ssl: 
+#     enabled: false
+#   path:
+#     style:
+#       access: true
+#   endpoint: minio:9000
 
-fs:
-  allowed-fallback-filesystems: s3
+# fs:
+#   allowed-fallback-filesystems: s3

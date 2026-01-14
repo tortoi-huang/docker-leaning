@@ -1,0 +1,108 @@
+
+###
+### ScyllaDB 2025.2 — 全节点通用配置
+### 适用于 Docker / K8s / 裸机一致性部署
+###
+
+# ===========================
+# 基础网络（节点差异项全部在 command 中设置）
+# ===========================
+listen_address: 0.0.0.0
+rpc_address: 0.0.0.0
+api_address: 0.0.0.0
+api_port: 10000
+
+# broadcast_address / broadcast_rpc_address
+# seeds
+# → 全部放到 docker-compose.yml 的 command 中
+
+# ===========================
+# 集群名称
+# ===========================
+cluster_name: "scylla-prod-2025-2"
+
+# ===========================
+# 存储与路径
+# ===========================
+# data_file_directories:
+#   - /var/lib/scylla/data
+# commitlog_directory: /var/lib/scylla/commitlog
+# hints_directory: /var/lib/scylla/hints
+
+# saved_caches_directory: /var/lib/scylla/saved_caches
+
+# ===========================
+# Tablets（2025.2 默认支持）
+# ===========================
+# 2025.2 引入 Tablets Guardrail，可强制新 Keyspace 使用 Tablets 模式（可选）
+# Docs: https://docs.scylladb.com/manual/branch-2025.2/operating-scylla/...
+# tablets_guardrail_enforce: true   # 若你希望强制所有新 keyspace 使用 tablets
+
+# ===========================
+# 新特性：ZSTD 字典压缩（2025.2 新增）
+# ===========================
+# 注意：启用压缩方式需要在 "CREATE TABLE" 或 "ALTER TABLE" 中设置
+# scylla.yaml 仅可控制全局压缩选项
+# Docs: https://docs.scylladb.com/manual/branch-2025.2/operating-scylla/procedures/config-change/sstable-dictionary-compression.html
+# sstable_compression: ZstdWithDictsCompressor
+
+# ===========================
+# 新特性：Native Backup（2025.2）
+# ===========================
+# backup:
+#   enabled: true
+#   storage: /var/lib/scylla/backup
+
+# ===========================
+# 向量类型支持（2025.2 新增）
+# 不需要在 scylla.yaml 配置，在 CQL 模式中自动支持
+# Docs: https://docs.scylladb.com/manual/branch-2025.2/cql/types.html#vectors
+
+# ===========================
+# 机房拓扑 Snitch（2025.2 Guardrail 改进）
+# ===========================
+# endpoint_snitch: GossipingPropertyFileSnitch
+
+# Guardrail：2025.2 禁止修改已启动节点的 snitch/DC/Rack
+# 仅用于提醒，配置和旧版相同（限制由内部 Guardrail 控制）
+
+# ===========================
+# Raft / Majority-loss Recovery（2025.2）
+# Docs: https://docs.scylladb.com/manual/branch-2025.2/troubleshooting/handling-node-failures.html#manual-recovery-procedure
+# Raft 新特性默认开启，无需在 YAML 中手动配置
+
+# ===========================
+# Authentication（可选）
+# ===========================
+# authenticator: PasswordAuthenticator
+# authorizer: CassandraAuthorizer
+
+# ===========================
+# TLS（可选）
+# ===========================
+# server_encryption_options:
+#   internode_encryption: all
+#   certificate: /etc/scylla/certs/server.crt
+#   keyfile: /etc/scylla/certs/server.key
+#   trusted_certificate: /etc/scylla/certs/ca.crt
+#
+# client_encryption_options:
+#   enabled: true
+#   certificate: /etc/scylla/certs/server.crt
+#   keyfile: /etc/scylla/certs/server.key
+#   require_client_auth: true
+
+# ===========================
+# Developer-mode（确保关闭）
+# ===========================
+developer_mode: false
+
+# ===========================
+# 性能参数（生产默认）
+# ===========================
+num_tokens: 256
+
+# 可调优项（按需）
+# compaction_throughput_mb_per_sec: 64
+# memtable_flush_writers: 2
+# concurrent_compactors: 2

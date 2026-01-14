@@ -3,7 +3,7 @@ blob:
     port: '6124'
 taskmanager:
   memory:
-    # jvm 线程总共可用内存, 这里可以配置和容器内存一样大小
+    # jvm 线程总共可用内存, 建议使用物理内存的60%-70%， 预留操作系统page cache和网络栈内存
     process:
       size: 768m
     # 所有堆内存+堆外内存, 不含元数据和overhead内存

@@ -13,7 +13,11 @@ services:
     #     jobmanager.rpc.address: jobmanager
     #     taskmanager.numberOfTaskSlots: 2
     volumes: 
-      - ./conf/flink/jobmanager/config.yaml:/opt/flink/conf/config.yaml:ro
+      - ./config/flink-jobmanager/config.yaml:/opt/flink/conf/config.yaml:ro
+      - ./lib/flink-sql-connector-oracle-cdc-3.5.0.jar:/opt/flink/lib/flink-sql-connector-oracle-cdc-3.5.0.jar:ro
+      - ./lib/flink-sql-connector-postgres-cdc-3.5.0.jar:/opt/flink/lib/flink-sql-connector-postgres-cdc-3.5.0.jar:ro
+      - ./lib/ojdbc8-23.26.0.0.0.jar:/opt/flink/lib/ojdbc8-23.26.0.0.0.jar:ro
+      - ./lib/kingbase8-9.0.1.jar:/opt/flink/lib/kingbase8-9.0.1.jar:ro
     healthcheck:
       test:
         - "CMD"
@@ -33,9 +37,11 @@ services:
     #     jobmanager.rpc.address: jobmanager
     #     taskmanager.numberOfTaskSlots: 2
     volumes: 
-      - ./conf/flink/jobmanager/config.yaml:/opt/flink/conf/config.yaml:ro
+      - ./config/flink-jobmanager/config.yaml:/opt/flink/conf/config.yaml:ro
       - ./lib/flink-sql-connector-oracle-cdc-3.5.0.jar:/opt/flink/lib/flink-sql-connector-oracle-cdc-3.5.0.jar:ro
       - ./lib/flink-sql-connector-postgres-cdc-3.5.0.jar:/opt/flink/lib/flink-sql-connector-postgres-cdc-3.5.0.jar:ro
+      - ./lib/ojdbc8-23.26.0.0.0.jar:/opt/flink/lib/ojdbc8-23.26.0.0.0.jar:ro
+      - ./lib/kingbase8-9.0.1.jar:/opt/flink/lib/kingbase8-9.0.1.jar:ro
     depends_on: 
       jobmanager:
         condition: service_healthy
@@ -54,8 +60,13 @@ services:
       - -Drest.address=jobmanager
       - -Dsql-gateway.endpoint.rest.address=sql-gateway
     volumes: 
-      - ./lib/kafka/flink-connector-kafka-3.2.0-1.19.jar:/opt/flink/lib/flink-connector-kafka-3.2.0-1.19.jar:ro
-      - ./lib/kafka/kafka-clients-3.8.0.jar:/opt/flink/lib/kafka-clients-3.8.0.jar:ro
+      - ./config/flink-jobmanager/config.yaml:/opt/flink/conf/config.yaml:ro
+      # - ./lib/kafka/flink-connector-kafka-3.2.0-1.19.jar:/opt/flink/lib/flink-connector-kafka-3.2.0-1.19.jar:ro
+      # - ./lib/kafka/kafka-clients-3.8.0.jar:/opt/flink/lib/kafka-clients-3.8.0.jar:ro
+      - ./lib/flink-sql-connector-oracle-cdc-3.5.0.jar:/opt/flink/lib/flink-sql-connector-oracle-cdc-3.5.0.jar:ro
+      - ./lib/flink-sql-connector-postgres-cdc-3.5.0.jar:/opt/flink/lib/flink-sql-connector-postgres-cdc-3.5.0.jar:ro
+      - ./lib/ojdbc8-23.26.0.0.0.jar:/opt/flink/lib/ojdbc8-23.26.0.0.0.jar:ro
+      - ./lib/kingbase8-9.0.1.jar:/opt/flink/lib/kingbase8-9.0.1.jar:ro
     # depends_on: 
     #   jobmanager:
     #     condition: service_healthy

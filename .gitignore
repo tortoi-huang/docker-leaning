@@ -3,6 +3,10 @@ HELP.md
 ### VS Code ###
 .vscode/
 
+
+compose/*/temp/*
+compose/*/data/*
+
 compose/mysqlGR/data1/**
 compose/mysqlGR/data2/**
 compose/mysqlGR/data3/**
@@ -50,6 +54,13 @@ runc/helloworld/container/*.tar
 compose/scylladb/data/*/**
 compose/milvus/data/*/**
 compose/debezium/oracle/data/*/**
+compose/debezium/oracle/lib/*
+compose/debezium/oracle/data/kingbase
+
+
+compose/oracle/data/*/**
+
+compose/kingbase/image/kingbase
 
 # 全局不忽略，需要写在最后， gitignore 会按行的顺序执行
 !.gitkeep

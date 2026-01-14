@@ -49,11 +49,21 @@ GRANT SELECT ON SYSTEM.LOGMNR_OBJ$ TO cdc_logminer_privs;
 GRANT SELECT ON SYSTEM.LOGMNR_USER$ TO cdc_logminer_privs;
 GRANT SELECT ON SYSTEM.LOGMNR_UID$ TO cdc_logminer_privs;
 GRANT SELECT ON V_$DATABASE TO cdc_logminer_privs;
+-- 没有授权访问此表会导致同步所有列为null
+GRANT SELECT ON V_$LOGMNR_CONTENTS TO cdc_logminer_privs;
+GRANT SELECT ON V_$LOG TO cdc_logminer_privs;
+GRANT SELECT ON V_$ARCHIVED_LOG TO cdc_logminer_privs;
+GRANT SELECT ON V_$LOGFILE TO cdc_logminer_privs;
+GRANT EXECUTE ON DBMS_LOGMNR TO cdc_logminer_privs;
+GRANT EXECUTE ON DBMS_LOGMNR_D TO cdc_logminer_privs;
 GRANT SELECT_CATALOG_ROLE TO cdc_logminer_privs;
+GRANT ANALYZE ANY TO cdc_logminer;
+-- Debezium Oracle Connector（Flink CDC 底层）在 LogMiner 模式下需要一个辅助表来记录 SCN（系统变更号），用于增量日志挖掘的状态管理。
 GRANT LOGMINING TO cdc_logminer_privs;  -- 仅在 12c 上必须
 
 -- 创建用户
 CREATE USER cdc_logminer IDENTIFIED BY oracle1 DEFAULT TABLESPACE users;
+GRANT CREATE TABLE TO cdc_logminer;
 GRANT cdc_logminer_privs TO cdc_logminer;
 ALTER USER cdc_logminer QUOTA UNLIMITED ON users;
 
