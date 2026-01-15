@@ -11,6 +11,11 @@ sys 用户以 sysdba 角色登录执行， 这段sql放在 /container-entrypoint
 执行sqlplus通常不需要密码
 /u01/app/oracle/product/12.1.0/xe/bin/sqlplus / as sysdba
 ```sql
+-- 查看日志大小
+SHOW PARAMETER db_recovery_file_dest;
+--ALTER SYSTEM SET db_recovery_file_dest_size = 1G;
+-- ALTER SYSTEM SET db_recovery_file_dest      = '/opt/oracle/oradata/recovery_area' SCOPE=spfile;
+
 SELECT log_mode FROM v$database;
 -- 或者 
 -- ARCHIVE LOG LIST;
@@ -30,45 +35,82 @@ ALTER DATABASE OPEN;
 ALTER DATABASE FORCE LOGGING;
 
 -- 开启数据库及表级补充日志，确保 OLR 能捕获行级数据变化
+ALTER DATABASE ADD SUPPLEMENTAL LOG DATA;
 ALTER DATABASE ADD SUPPLEMENTAL LOG DATA (ALL) COLUMNS;
 -- ALTER TABLE your_schema.your_table ADD SUPPLEMENTAL LOG DATA (ALL) COLUMNS;
 
 ```
 
-### 配置查询日志用用户权限
+### 检查日志组件是否安装
+```sql
+-- 仍以 SYSDBA， 有输出表示安装了
+DESC DBMS_LOGMNR;
+DESC DBMS_LOGMNR_D;
+
+-- 若未安装，可执行（路径依 ORACLE_HOME 而定）：
+-- @$ORACLE_HOME/rdbms/admin/dbmslm.sql
+-- @$ORACLE_HOME/rdbms/admin/dbmslmd.sql
+
+```
+
+### 配置CDC 用户权限
 
 ```sql
 
+-- 仍以 SYSDBA 执行；非 CDB 环境仅建一次
+CREATE TABLESPACE LOGMINER_TBS
+  DATAFILE '/u01/app/oracle/oradata/xe/LOGMINER_TBS01.dbf'
+  SIZE 25M REUSE AUTOEXTEND ON MAXSIZE UNLIMITED;
+
+-- 一下以普通dba角色执行(也可以以sysdba角色执行)
 -- 创建角色
 CREATE ROLE cdc_logminer_privs;
-GRANT CREATE SESSION, EXECUTE_CATALOG_ROLE, SELECT ANY TRANSACTION,
-      FLASHBACK ANY TABLE, SELECT ANY TABLE, LOCK ANY TABLE,
-      SELECT ANY DICTIONARY TO cdc_logminer_privs;
-GRANT SELECT ON SYSTEM.LOGMNR_COL$ TO cdc_logminer_privs;
-GRANT SELECT ON SYSTEM.LOGMNR_OBJ$ TO cdc_logminer_privs;
-GRANT SELECT ON SYSTEM.LOGMNR_USER$ TO cdc_logminer_privs;
-GRANT SELECT ON SYSTEM.LOGMNR_UID$ TO cdc_logminer_privs;
+-- 授权，注意所有V_$*对象，它的公共同义词是没有_的，其他用户查询应该用V$* 同义词
+GRANT CREATE SESSION, EXECUTE_CATALOG_ROLE, SELECT_CATALOG_ROLE,
+    SELECT ANY TRANSACTION, FLASHBACK ANY TABLE, SELECT ANY TABLE,
+    LOCK ANY TABLE, SELECT ANY DICTIONARY TO cdc_logminer_privs;
+-- GRANT SELECT ON SYSTEM.LOGMNR_COL$ TO cdc_logminer_privs;
+-- GRANT SELECT ON SYSTEM.LOGMNR_OBJ$ TO cdc_logminer_privs;
+-- GRANT SELECT ON SYSTEM.LOGMNR_USER$ TO cdc_logminer_privs;
+-- GRANT SELECT ON SYSTEM.LOGMNR_UID$ TO cdc_logminer_privs;
 GRANT SELECT ON V_$DATABASE TO cdc_logminer_privs;
--- 没有授权访问此表会导致同步所有列为null
 GRANT SELECT ON V_$LOGMNR_CONTENTS TO cdc_logminer_privs;
 GRANT SELECT ON V_$LOG TO cdc_logminer_privs;
 GRANT SELECT ON V_$ARCHIVED_LOG TO cdc_logminer_privs;
 GRANT SELECT ON V_$LOGFILE TO cdc_logminer_privs;
 GRANT EXECUTE ON DBMS_LOGMNR TO cdc_logminer_privs;
 GRANT EXECUTE ON DBMS_LOGMNR_D TO cdc_logminer_privs;
-GRANT SELECT_CATALOG_ROLE TO cdc_logminer_privs;
-GRANT ANALYZE ANY TO cdc_logminer;
+GRANT SELECT ON V_$LOG_HISTORY          TO cdc_logminer_privs;
+GRANT SELECT ON V_$ARCHIVE_DEST_STATUS  TO cdc_logminer_privs;
+GRANT SELECT ON V_$LOGMNR_LOGS          TO cdc_logminer_privs;
+GRANT SELECT ON V_$LOGMNR_PARAMETERS    TO cdc_logminer_privs;
+GRANT SELECT ON V_$TRANSACTION          TO cdc_logminer_privs;
+GRANT SELECT ON V_$MYSTAT               TO cdc_logminer_privs;
+GRANT SELECT ON V_$STATNAME             TO cdc_logminer_privs;
+GRANT ANALYZE ANY TO cdc_logminer_privs;
+GRANT CREATE TABLE, CREATE SEQUENCE TO cdc_logminer_privs;
 -- Debezium Oracle Connector（Flink CDC 底层）在 LogMiner 模式下需要一个辅助表来记录 SCN（系统变更号），用于增量日志挖掘的状态管理。
 GRANT LOGMINING TO cdc_logminer_privs;  -- 仅在 12c 上必须
 
+-- 查询已授权的权限
+SELECT 'SYS_PRIV' AS TYPE, PRIVILEGE AS NAME 
+FROM DBA_SYS_PRIVS WHERE GRANTEE='CDC_LOGMINER_PRIVS'
+UNION ALL
+SELECT 'TAB_PRIV', PRIVILEGE||' ON '||OWNER||'.'||TABLE_NAME 
+FROM DBA_TAB_PRIVS WHERE GRANTEE='CDC_LOGMINER_PRIVS'
+UNION ALL
+SELECT 'ROLE_PRIV', GRANTED_ROLE 
+FROM DBA_ROLE_PRIVS WHERE GRANTEE='CDC_LOGMINER_PRIVS';
+
+
 -- 创建用户
-CREATE USER cdc_logminer IDENTIFIED BY oracle1 DEFAULT TABLESPACE users;
-GRANT CREATE TABLE TO cdc_logminer;
+CREATE USER cdc_logminer IDENTIFIED BY oracle1 DEFAULT TABLESPACE LOGMINER_TBS QUOTA UNLIMITED ON LOGMINER_TBS;
 GRANT cdc_logminer_privs TO cdc_logminer;
-ALTER USER cdc_logminer QUOTA UNLIMITED ON users;
 
 ```
-### 获取主库更新日志内容
+
+### 测试获取主库更新日志内容
+使用 cdc_logminer 用户登录测试获取日志
 ```sql
 
 -- 查询在线(实时)日志文件

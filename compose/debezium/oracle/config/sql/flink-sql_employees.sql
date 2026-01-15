@@ -17,21 +17,22 @@ SET 'restart-strategy.fixed-delay.delay' = '5 s';
 -- SET 'state.checkpoints.dir' = 'file:///opt/flink/checkpoints';    -- 检查点目录
 -- SET 'state.savepoints.dir' = 'file:///opt/flink/savepoints';      -- 保存点目录
 
+-- 建表中的字段名一定要严格和oracle 元数据表中存储的大小写一致，通常都是大写,
 -- 1) Oracle CDC Source：先做快照(initial)，后续实时增量(LogMiner)
 CREATE TABLE oracle_employees (
-  employee_id     INT,
-  first_name      STRING,
-  last_name       STRING,
-  email           STRING,
-  salary          DECIMAL(8,2),
-  commission_pct  DECIMAL(2,2),
-  hire_date       TIMESTAMP(3),
-  birth_date      TIMESTAMP(6),
-  `resume`          STRING,     -- Oracle CLOB
-  photo           BYTES,      -- Oracle BLOB
-  `status`          STRING,     -- CHAR(1)
-  department_id   INT,
-  PRIMARY KEY (employee_id) NOT ENFORCED
+  EMPLOYEE_ID     INT,
+  FIRST_NAME      STRING,
+  LAST_NAME       STRING,
+  EMAIL           STRING,
+  SALARY          DECIMAL(8,2),
+  COMMISSION_PCT  DECIMAL(2,2),
+  HIRE_DATE       TIMESTAMP(3),
+  BIRTH_DATE      TIMESTAMP(6),
+  `RESUME`          STRING,     -- Oracle CLOB
+  PHOTO           BYTES,      -- Oracle BLOB
+  `STATUS`          STRING,     -- CHAR(1)
+  DEPARTMENT_ID   INT,
+  PRIMARY KEY (EMPLOYEE_ID) NOT ENFORCED
 ) WITH (
   'connector' = 'oracle-cdc',
   'hostname' = 'oracle',
@@ -79,26 +80,28 @@ CREATE TABLE oracle_employees (
 --   status     CHAR(1) DEFAULT 'A'
 --   department_id INT
 CREATE TABLE kingbase_employees (
-  employee_id     INT,
-  first_name      STRING,
-  last_name       STRING,
-  email           STRING,
-  salary          DECIMAL(8,2),
-  commission_pct  DECIMAL(2,2),
-  hire_date       TIMESTAMP(3),
-  birth_date      TIMESTAMP(6),
-  resume          STRING,
-  photo           BYTES,
-  status          STRING,
-  department_id   INT,
-  PRIMARY KEY (employee_id) NOT ENFORCED
+  EMPLOYEE_ID     INT,
+  FIRST_NAME      STRING,
+  LAST_NAME       STRING,
+  EMAIL           STRING,
+  SALARY          DECIMAL(8,2),
+  COMMISSION_PCT  DECIMAL(2,2),
+  HIRE_DATE       TIMESTAMP(3),
+  BIRTH_DATE      TIMESTAMP(6),
+  `RESUME`          STRING,
+  PHOTO           BYTES,
+  `STATUS`          STRING,
+  DEPARTMENT_ID   INT,
+  PRIMARY KEY (EMPLOYEE_ID) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc',
-  'url' = 'jdbc:kingbase8://kingbase:54321/kingbase',
+  -- 'url' = 'jdbc:kingbase8://kingbase:54321/kingbase',
+  'url' = 'jdbc:postgresql://kingbase:54321/kingbase?currentSchema=app_user',
   'table-name' = 'employees',
   'username' = 'app_user',
   'password' = 'StrongP@ssw0rd',
-  'driver' = 'com.kingbase8.Driver',
+  -- 'driver' = 'com.kingbase8.Driver',
+  'driver' = 'org.postgresql.Driver',
 
   -- Sink 调优：降低延迟同时兼顾吞吐
   'sink.max-retries' = '3',
@@ -106,19 +109,20 @@ CREATE TABLE kingbase_employees (
   'sink.buffer-flush.interval' = '2s'
 );
 
+
 -- 3) 启动实时同步（一次 SQL：快照 + 增量持续）
 INSERT INTO kingbase_employees
 SELECT
-  employee_id,
-  first_name,
-  last_name,
-  email,
-  salary,
-  commission_pct,
-  hire_date,
-  birth_date,
-  resume,
-  photo,
-  status,
-  department_id
+  EMPLOYEE_ID,
+  FIRST_NAME,
+  LAST_NAME,
+  EMAIL,
+  SALARY,
+  COMMISSION_PCT,
+  HIRE_DATE,
+  BIRTH_DATE,
+  `RESUME`,
+  PHOTO,
+  `STATUS`,
+  DEPARTMENT_ID
 FROM oracle_employees;

@@ -14,9 +14,11 @@ services:
     #     taskmanager.numberOfTaskSlots: 2
     volumes: 
       - ./config/flink-jobmanager/config.yaml:/opt/flink/conf/config.yaml:ro
+      - ./lib/flink-connector-jdbc-3.3.0-1.20.jar:/opt/flink/lib/flink-connector-jdbc-3.3.0-1.20.jar:ro
       - ./lib/flink-sql-connector-oracle-cdc-3.5.0.jar:/opt/flink/lib/flink-sql-connector-oracle-cdc-3.5.0.jar:ro
       - ./lib/flink-sql-connector-postgres-cdc-3.5.0.jar:/opt/flink/lib/flink-sql-connector-postgres-cdc-3.5.0.jar:ro
       - ./lib/ojdbc8-23.26.0.0.0.jar:/opt/flink/lib/ojdbc8-23.26.0.0.0.jar:ro
+      - ./lib/postgresql-42.6.2.jar:/opt/flink/lib/postgresql-42.6.2.jar:ro
       - ./lib/kingbase8-9.0.1.jar:/opt/flink/lib/kingbase8-9.0.1.jar:ro
     healthcheck:
       test:
@@ -38,9 +40,11 @@ services:
     #     taskmanager.numberOfTaskSlots: 2
     volumes: 
       - ./config/flink-jobmanager/config.yaml:/opt/flink/conf/config.yaml:ro
+      - ./lib/flink-connector-jdbc-3.3.0-1.20.jar:/opt/flink/lib/flink-connector-jdbc-3.3.0-1.20.jar:ro
       - ./lib/flink-sql-connector-oracle-cdc-3.5.0.jar:/opt/flink/lib/flink-sql-connector-oracle-cdc-3.5.0.jar:ro
       - ./lib/flink-sql-connector-postgres-cdc-3.5.0.jar:/opt/flink/lib/flink-sql-connector-postgres-cdc-3.5.0.jar:ro
       - ./lib/ojdbc8-23.26.0.0.0.jar:/opt/flink/lib/ojdbc8-23.26.0.0.0.jar:ro
+      - ./lib/postgresql-42.6.2.jar:/opt/flink/lib/postgresql-42.6.2.jar:ro
       - ./lib/kingbase8-9.0.1.jar:/opt/flink/lib/kingbase8-9.0.1.jar:ro
     depends_on: 
       jobmanager:
