@@ -5,10 +5,11 @@ oracle日志分为联机(实时)日志和归档日志。 默认归档日志是�
 
 这里镜像truevoly/oracle-12c不支持开启主从同步，需要启动后进入容器手工配置oracle.
 ### 启用 ARCHIVELOG
-sys 用户以 sysdba 角色登录执行， 这段sql放在 /container-entrypoint-initdb.d 中执行了, /container-entrypoint-initdb.d 中的sql会以sys用户sysdba角色运行
+sys 用户以 sysdba 角色登录执行。
 
-进入docker 容器并切换到oracle 使用sql plus执行， 容器外部sql执行无法关闭数据库
-执行sqlplus通常不需要密码
+容器初始化时会以sysdba 身份执行 /container-entrypoint-initdb.d/下的sql,sh 和dmp文件,config/entrypoint-initdb/01-init.sql，挂载到该目录执行（未测试）
+
+进入docker 容器并切换到oracle用户 使用sql plus执行， 容器外部sql执行无法关闭数据库，执行sqlplus通常不需要密码
 /u01/app/oracle/product/12.1.0/xe/bin/sqlplus / as sysdba
 ```sql
 -- 查看日志大小
@@ -154,3 +155,9 @@ END;
 
 ## kingbase
 kingbase 不提供镜像源，没有开源镜像源， 官方提供的容器 tar下载，但是无法使用，需要自行构建镜像，参考目录 [kingbase](compose/kingbase/README.md)
+
+
+## 测试cdc
++ 执行config/sql/practic.sql 分别在oracle和kingbase创建表，并在Oracle插入数据
++ sudo docker compose exec -it jobmanager bin/sql-client.sh 进入jobmanager的sql客户端执行 flink-sql_emp.sql 中的命令
++ 检查kingbase 查看数据是否同步

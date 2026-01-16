@@ -14,7 +14,7 @@ services:
     volumes:
       # Persist data
       - oracle-data:/u01/app/oracle
-      # 数据库初始化脚本，创建时执行一次
+      # 数据库初始化脚本，创建时执行一次，未测试
       # - ./config/entrypoint-initdb:/docker-entrypoint-initdb.d:ro
     # healthcheck:
     #   # healthcheck.sh 的第1个参数可指定要检测的 PDB 名称；不传则使用 ORACLE_DATABASE 或默认 XEPDB1
@@ -51,12 +51,12 @@ services:
     ports:
       - "8081:8081"
   
-  taskmanager0:
-    extends: 
+  taskmanager:
+    extends:
       file: docker-compose-flink.yml
       service: taskmanager-temp
-    container_name: taskmgr0
-    hostname: taskmanager0
+    # container_name: taskmgr0
+    # hostname: taskmanager0
   # sql-gateway:
   #   extends: 
   #     file: docker-compose-flink.yml

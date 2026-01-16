@@ -20,6 +20,10 @@ services:
       - ./lib/ojdbc8-23.26.0.0.0.jar:/opt/flink/lib/ojdbc8-23.26.0.0.0.jar:ro
       - ./lib/postgresql-42.6.2.jar:/opt/flink/lib/postgresql-42.6.2.jar:ro
       - ./lib/kingbase8-9.0.1.jar:/opt/flink/lib/kingbase8-9.0.1.jar:ro
+      - ./data/flink/checkpoints:/data/flink/checkpoints
+      - ./data/flink/savepoints:/data/flink/savepoints
+      # 不配置下面ha重启会导致job丢失,配置了也需要依赖zookeeper ha才不会丢失job
+      - ./data/flink/ha:/data/flink/ha
     healthcheck:
       test:
         - "CMD"
@@ -46,10 +50,14 @@ services:
       - ./lib/ojdbc8-23.26.0.0.0.jar:/opt/flink/lib/ojdbc8-23.26.0.0.0.jar:ro
       - ./lib/postgresql-42.6.2.jar:/opt/flink/lib/postgresql-42.6.2.jar:ro
       - ./lib/kingbase8-9.0.1.jar:/opt/flink/lib/kingbase8-9.0.1.jar:ro
+      - ./data/flink/checkpoints:/data/flink/checkpoints
+      - ./data/flink/savepoints:/data/flink/savepoints
+      - ./data/flink/ha:/data/flink/ha
     depends_on: 
       jobmanager:
         condition: service_healthy
     deploy:
+      # replicas: 2
       resources:
         limits:
           memory: 1024m

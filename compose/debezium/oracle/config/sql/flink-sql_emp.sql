@@ -5,11 +5,11 @@ SET 'pipeline.name' = 'emp_cdc_oracle_to_kingbase';
 -- SET 'execution.savepoint.path' = 'file:///flink-savepoints/savepoint-<id>';
 
 -- 推荐在会话或作业层启用 checkpoint 和重启策略（保障流式与容错）
-SET 'execution.checkpointing.interval' = '10s';
-SET 'execution.checkpointing.mode' = 'EXACTLY_ONCE';
-SET 'restart-strategy' = 'fixed-delay';
-SET 'restart-strategy.fixed-delay.attempts' = '10';
-SET 'restart-strategy.fixed-delay.delay' = '5 s';
+-- SET 'execution.checkpointing.interval' = '10s';
+-- SET 'execution.checkpointing.mode' = 'EXACTLY_ONCE';
+-- SET 'restart-strategy' = 'fixed-delay';
+-- SET 'restart-strategy.fixed-delay.attempts' = '10';
+-- SET 'restart-strategy.fixed-delay.delay' = '5 s';
 
 -- 状态后端配置
 -- SET 'state.backend' = 'rocksdb';
