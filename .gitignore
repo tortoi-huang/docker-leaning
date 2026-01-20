@@ -62,5 +62,8 @@ compose/oracle/data/*/**
 
 compose/kingbase/image/kingbase
 
+
+compose/paimon/lib/*
+
 # 全局不忽略，需要写在最后， gitignore 会按行的顺序执行
 !.gitkeep

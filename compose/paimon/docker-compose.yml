@@ -1,0 +1,172 @@
+x-flink: &flink
+  image: flink:1.20.3-java17
+  environment: &flink_env
+    FLINK_PROPERTIES: |
+      state.checkpoints.dir: s3://${MINIO_BUCKET_FLINK}/checkpoints
+      state.savepoints.dir: s3://${MINIO_BUCKET_FLINK}/savepoints
+      s3.access-key: ${MINIO_FLINK_AK}
+      s3.secret-key: ${MINIO_FLINK_SK}
+      s3.ssl.enabled: false
+      s3.path.style.access: true
+      s3.endpoint: ${MINIO_ENDPOINT}
+      high-availability.type: zookeeper
+      high-availability.zookeeper.quorum: zoo1:2181
+      high-availability.storageDir: s3://${MINIO_BUCKET_FLINK}/ha
+
+    MINIO_ENDPOINT: ${MINIO_ENDPOINT}
+    MINIO_PAIMON_AK: ${MINIO_PAIMON_AK}
+    MINIO_PAIMON_SK: ${MINIO_PAIMON_SK}
+    MINIO_BUCKET_PAIMON: ${MINIO_BUCKET_PAIMON}
+    AWS_JAVA_V1_PRINT_LOCATION: true
+    # AWS_JAVA_V1_DISABLE_DEPRECATION_ANNOUNCEMENT: true
+  volumes: &flink_file
+    - ./config/flink/jobmanager/config.yaml:/opt/flink/conf/config.yaml:ro
+    - ./lib/flink-s3-fs-hadoop-1.20.3.jar:/opt/flink/plugins/s3-fs-hadoop/flink-s3-fs-hadoop-1.20.3.jar:ro
+    - ./lib/flink-connector-jdbc-3.3.0-1.20.jar:/opt/flink/lib/flink-connector-jdbc-3.3.0-1.20.jar:ro
+    - ./lib/paimon-bundle-1.3.1.jar:/opt/flink/lib/paimon-bundle-1.3.1.jar:ro
+    - ./lib/flink-sql-connector-postgres-cdc-3.5.0.jar:/opt/flink/lib/flink-sql-connector-postgres-cdc-3.5.0.jar:ro
+    - ./lib/postgresql-42.6.2.jar:/opt/flink/lib/postgresql-42.6.2.jar:ro
+    - ./data/flink/ha:/data/flink/ha
+
+services:
+  minio:
+    container_name: minio
+    image: minio/minio:RELEASE.2024-12-18T13-15-44Z
+    environment:
+      # MINIO_ACCESS_KEY, MINIO_SECRET_KEY 已标记为将废弃
+      # MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
+      # MINIO_SECRET_KEY: ${MINIO_ROOT_USER}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    ports:
+      - "9001:9001"
+      - "9000:9000"
+    volumes:
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/data/minio:/minio_data
+    command: minio server /minio_data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+      
+  minio-init:
+    container_name: minio-init
+    image: minio/minio:RELEASE.2024-12-18T13-15-44Z
+    entrypoint: ["/bin/sh"]
+    command: /init_bucket.sh
+    environment:
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_FLINK_AK: ${MINIO_FLINK_AK}
+      MINIO_FLINK_SK: ${MINIO_FLINK_SK}
+      MINIO_BUCKET_FLINK: ${MINIO_BUCKET_FLINK}
+      MINIO_PAIMON_AK: ${MINIO_PAIMON_AK}
+      MINIO_PAIMON_SK: ${MINIO_PAIMON_SK}
+      MINIO_BUCKET_PAIMON: ${MINIO_BUCKET_PAIMON}
+    volumes: 
+      - ./config/minio/init_bucket.sh:/init_bucket.sh:ro
+      - ./config/minio/svracct-policy.json:/svracct-policy.json:ro
+    depends_on: 
+      minio:
+        condition: service_healthy
+
+  postgres:
+    image: 'postgres:17'
+    hostname: postgres
+    container_name: postgres
+    environment:
+      # POSTGRES_HOST_AUTH_METHOD 或者 POSTGRES_PASSWORD 必选一个, 前者意思是在本地登录不需要密码
+      POSTGRES_HOST_AUTH_METHOD: trust
+      # user 和 role 是一个意思, 如果这里不是 root 则启动后会有没有 root role 的告警
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      # 修改默认数据存储位置，默认是 /var/lib/postgresql/data
+      # PGDATA: /var/lib/postgresql/data
+    volumes: 
+      - ./data/pg:/var/lib/postgresql/data
+      # 初始化脚本
+      - ./config/pg/01_init.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  zoo1: &zk-server
+    image: zookeeper:3.9.4-jre-17
+    hostname: zoo1
+    # ports:
+    #  - 2181:2181
+    environment: &zk-env
+      # ZOO_SERVERS: server.1=zoo1:2888:3888;2181 server.2=zoo2:2888:3888;2181 server.3=zoo3:2888:3888;2181
+      ZOO_STANDALONE_ENABLED: true
+      ZOO_MY_ID: 1
+    volumes: 
+      - ./data/zookeeper/node1/logs:/logs
+      - ./data/zookeeper/node1/data:/data
+      - ./data/zookeeper/node1/datalog:/datalog
+    healthcheck:
+      test: ["CMD-SHELL", "bin/zkServer.sh", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  # zoo2:
+  #   <<: *zk-server
+  #   hostname: zoo2
+  #   environment: 
+  #     <<: *zk-env
+  #     ZOO_MY_ID: 2
+  #   volumes: 
+  #     - ./data/zookeeper/node2/logs:/logs
+  #     - ./data/zookeeper/node2/data:/data
+  #     - ./data/zookeeper/node2/datalog:/datalog
+  # zoo3:
+  #   <<: *zk-server
+  #   hostname: zoo3
+  #   environment: 
+  #     <<: *zk-env
+  #     ZOO_MY_ID: 3
+  #   volumes: 
+  #     - ./data/zookeeper/node3/logs:/logs
+  #     - ./data/zookeeper/node3/data:/data
+  #     - ./data/zookeeper/node3/datalog:/datalog
+
+  jobmanager:
+    <<: *flink
+    container_name: jm
+    command: jobmanager
+    # 因为没有dns, task manager 需要通过 hostname 作为域名访问 jobmanager, 这里需要与 taskmanager 的配置参数 jobmanager.rpc.address 匹配
+    hostname: jobmanager
+    healthcheck:
+      test:
+        - "CMD"
+        - "curl"
+        - "localhost:8081"
+    ports:
+      - "8081:8081"
+    depends_on: 
+      minio-init:
+        condition: service_completed_successfully
+      zoo1:
+        condition: service_healthy
+  
+  taskmanager:
+    <<: *flink
+    command: taskmanager
+    depends_on: 
+      jobmanager:
+        condition: service_healthy
+
+  # flink-initor:
+  #   <<: *flink
+  #   command: flink-initor
+  #   depends_on: 
+  #     jobmanager:
+  #       condition: service_healthy
+
+networks:
+  default: 
+    name: paimon-net
