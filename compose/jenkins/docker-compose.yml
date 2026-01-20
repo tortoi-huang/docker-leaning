@@ -6,7 +6,6 @@ services:
     hostname: postgres
     container_name: postgres
     environment:
-      # user 和 role 是一个意思, 如果这里不是 root 则启动后会有没有 root role 的告警
       POSTGRES_USER: root
       # POSTGRES_HOST_AUTH_METHOD 或者 POSTGRES_PASSWORD 必选一个, 前者意思是在本地登录不需要密码
       POSTGRES_HOST_AUTH_METHOD: trust
@@ -19,6 +18,7 @@ services:
       # 初始化脚本
       - ./config/pginit.sh:/docker-entrypoint-initdb.d/init-user-db.sh:ro
     healthcheck:
+      # 这里默认会使用操作系统的用户名来作为数据库名和用户名，通常是root，如果没有则提示没有root数据库或者没有root用户名
       test: ["CMD-SHELL", "pg_isready"]
       interval: 10s
       timeout: 5s

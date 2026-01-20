@@ -38,3 +38,15 @@ fi
 if [[ ! -f "${dir}/lib/flink-s3-fs-hadoop-1.20.3.jar" ]]; then
   wget -O ${dir}/lib/flink-s3-fs-hadoop-1.20.3.jar https://repo1.maven.org/maven2/org/apache/flink/flink-s3-fs-hadoop/1.20.3/flink-s3-fs-hadoop-1.20.3.jar
 fi
+
+if [[ ! -f "${dir}/lib/paimon-flink-1.20-1.3.1.jar" ]]; then
+  wget -O ${dir}/lib/paimon-flink-1.20-1.3.1.jar https://repo1.maven.org/maven2/org/apache/paimon/paimon-flink-1.20/1.3.1/paimon-flink-1.20-1.3.1.jar
+fi
+
+if [[ ! -f "${dir}/lib/flink-shaded-hadoop-2-uber-2.8.3-10.0.jar" ]]; then
+  wget -O ${dir}/lib/flink-shaded-hadoop-2-uber-2.8.3-10.0.jar https://repo1.maven.org/maven2/org/apache/flink/flink-shaded-hadoop-2-uber/2.8.3-10.0/flink-shaded-hadoop-2-uber-2.8.3-10.0.jar
+fi
+
+if [[ ! -f "${dir}/lib/paimon-s3-1.3.1.jar" ]]; then
+  wget -O ${dir}/lib/paimon-s3-1.3.1.jar https://repo1.maven.org/maven2/org/apache/paimon/paimon-s3/1.3.1/paimon-s3-1.3.1.jar
+fi
