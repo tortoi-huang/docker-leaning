@@ -5,7 +5,10 @@ HELP.md
 
 
 compose/*/temp/*
+compose/*/tmp/*
 compose/*/data/*
+
+compose/innodb_cluster/jdbc/*.jar
 
 compose/mysqlGR/data1/**
 compose/mysqlGR/data2/**
