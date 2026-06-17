@@ -1,6 +1,7 @@
 services:
   # 这里配子一个容器服务并声明为模板 template
   # docker compose exec -it claude /bin/bash
+  # docker run -it --rm --name claude-sb -v ./freedomscm-scm-tms-claude:/workspace/tms -v ~/.m2:/home/developer/.m2 -v ~/.ssh:/home/developer/.ssh -v ~/.gitconfig:/home/developer/.gitconfig claude-java25:0.0.4
   claude: 
     #image: mysql:8.0.33
     image: claude-java25:0.0.4
@@ -11,7 +12,7 @@ services:
     stdin_open: true
     # network_mode: "host"
     environment:
-      - ANTHROPIC_AUTH_TOKEN=
+      # - ANTHROPIC_AUTH_TOKEN=
       - ANTHROPIC_BASE_URL=https://api.deepseek.com/anthropic
       - ANTHROPIC_DEFAULT_HAIKU_MODEL=deepseek-v4-flash
       - ANTHROPIC_DEFAULT_OPUS_MODEL=deepseek-v4-pro
@@ -19,10 +20,10 @@ services:
       - ANTHROPIC_MODEL=deepseek-v4-pro
       # - http_proxy=http://localhost:57890
       # - https_proxy=http://localhost:57890
-      # - no_proxy=localhost,127.0.0.1,::1
+      # - no_proxy=localhost,127.0.0.1,::1, 192.168.0.0/16
       # - HTTP_PROXY=http://localhost:57890
       # - HTTPS_PROXY=http://localhost:57890
-      # - NO_PROXY=localhost,127.0.0.1,::1
+      # - NO_PROXY=localhost,127.0.0.1,::1, 192.168.0.0/16
     volumes: 
       - ./freedomscm-scm-tms-claude:/workspace/tms
       - ~/.m2:/home/developer/.m2

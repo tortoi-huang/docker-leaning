@@ -1,6 +1,6 @@
 # ==========================================
 # 单阶段构建: Ubuntu 26.04 LTS + Bun + Claude Code + Java 25
-# docker buildx build -q -t claude-java25:0.0.4 .
+# docker buildx build -t claude-java25:0.0.4 .
 # docker run -it --rm --name claude-java25 -v $(pwd):/workspace claude-java25:0.0.4
 # ==========================================
 FROM ubuntu:26.04
@@ -13,6 +13,8 @@ ENV PATH="${BUN_INSTALL}/bin:${JAVA_HOME}/bin:${PATH}"
 # 安装基础工具与依赖
 RUN apt-get update && apt-get install -y --no-install-recommends \
     sudo \
+    iputils-ping \
+    iproute2 \
     curl \
     ca-certificates \
     unzip \
