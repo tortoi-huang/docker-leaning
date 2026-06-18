@@ -1,0 +1,39 @@
+schemaVersion: "1"
+kind: mixin
+name: java-sb
+displayName: java sandbox
+description: java sandbox for development and testing
+
+# 默认执行  --dangerously-skip-permissions, 这里可以配置默认的执行命令
+# sandbox:
+#   image: "docker/sandbox-templates:claude-code-docker"
+#   aiFilename: CLAUDE.md
+#   entrypoint:
+#     run: [claude]
+
+environment:
+  variables:
+    ANTHROPIC_BASE_URL: https://ark.cn-beijing.volces.com/api/coding
+    ANTHROPIC_AUTH_TOKEN: ${ANTHROPIC_AUTH_TOKEN}
+    ANTHROPIC_MODEL: glm-5.2
+
+commands:
+  install:
+    - command: >-
+        apt-get update && apt-get install -y --no-install-recommends \
+          iputils-ping \
+          iproute2 \
+          curl \
+          openjdk-25-jdk \
+          maven \
+          postgresql-client
+    # - command: "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.5/install.sh | bash"
+    #   user: "$(id -u)"
+    # - command: |-
+    #     export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")" \
+    #     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    #   user: "$(id -u)"
+    # - command: "nvm install lts/*"
+    #   user: "$(id -u)"
+    - command: "npm install -g @fission-ai/openspec@1.4.1"
+      user: "$(id -u)"
