@@ -26,6 +26,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     openjdk-25-jdk \
     maven \
     postgresql-client \
+    tree-sitter-cli\
     && rm -rf /var/lib/apt/lists/*
 
 # 声明外部传入的 UID 和 GID，默认值为 1000
@@ -59,6 +60,6 @@ RUN mkdir -p /opt/bun && \
 RUN chown -R ${USER_ID}:${GROUP_ID} /usr/local/bin /usr/local/lib/node_modules
 USER ${USER_ID}
 
-RUN npm install -g @anthropic-ai/claude-code@2.1.172 @fission-ai/openspec@1.4.1
+RUN npm install -g @anthropic-ai/claude-code@2.1.172 @fission-ai/openspec@1.4.1 @ast-grep/cli
 
 CMD ["/bin/bash"]
