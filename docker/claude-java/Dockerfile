@@ -26,6 +26,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     openjdk-25-jdk \
     maven \
     postgresql-client \
+    python3 \
     && rm -rf /var/lib/apt/lists/*
 
 # 声明外部传入的 UID 和 GID，默认值为 1000
