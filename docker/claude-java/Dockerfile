@@ -1,7 +1,7 @@
 # ==========================================
 # 单阶段构建: Ubuntu 26.04 LTS + Bun + Claude Code + Java 25
-# docker buildx build -t claude-java25:0.0.4 .
-# docker run -it --rm --name claude-java25 -v $(pwd):/workspace claude-java25:0.0.4
+# docker buildx build -t claude-java25:0.0.7 .
+# docker run -it --rm --name claude-java25 -v $(pwd):/workspace claude-java25:0.0.7
 # ==========================================
 FROM ubuntu:26.04
 
@@ -27,6 +27,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     maven \
     postgresql-client \
     python3 \
+    python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
 # 声明外部传入的 UID 和 GID，默认值为 1000
