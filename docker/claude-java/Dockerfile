@@ -1,6 +1,6 @@
 # ==========================================
 # 单阶段构建: Ubuntu 26.04 LTS + Bun + Claude Code + Java 25
-# docker buildx build -t claude-java25:0.0.7 .
+# docker buildx build --build-arg=USER_ID=$(id -u) -t claude-java25:0.0.7 .
 # docker run -it --rm --name claude-java25 -v $(pwd):/workspace claude-java25:0.0.7
 # ==========================================
 FROM ubuntu:26.04
@@ -26,9 +26,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     openjdk-25-jdk \
     maven \
     postgresql-client \
-    python3 \
-    python3-pip \
-    && rm -rf /var/lib/apt/lists/*
+    python3
+
+RUN apt-get install -y --no-install-recommends tzdata xmlstarlet
 
 # 声明外部传入的 UID 和 GID，默认值为 1000
 ARG USER_ID=1000
@@ -59,9 +59,11 @@ RUN mkdir -p /opt/bun && \
 # 安全切换：此处统一使用用户名切换，永远不会出错
 # ==========================================
 RUN chown -R ${USER_ID}:${GROUP_ID} /usr/local/bin /usr/local/lib/node_modules
+RUN rm -rf /var/lib/apt/lists/* 
 USER ${USER_ID}
 
 RUN npm install -g @anthropic-ai/claude-code@2.1.172 @fission-ai/openspec@1.4.1 @ast-grep/cli
 RUN npm install -g tree-sitter-cli tree-sitter-java
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
 CMD ["/bin/bash"]

@@ -45,11 +45,11 @@ echo "$MNT_USER_HOME/.bash_aliases: ${c_home}/.bash_aliases"
 
 # 3. 运行 Docker（对所有挂载路径加了双引号，防止空格引发的解析错误）
 docker run -it --rm \
-    --name claude-sb \
     -v "$ABSOLUTE_PATH":"/workspace/${MNT_DIR}" \
     -v "$HOME/.m2":"${c_home}/.m2" \
     -v "$HOME/.ssh":"${c_home}/.ssh" \
     -v "$HOME/.gitconfig":"${c_home}/.gitconfig" \
+    -v "$HOME/.cache/uv":"${c_home}/.cache/uv" \
     -v "$MNT_USER_HOME/.claude":"${c_home}/.claude" \
     -v "$MNT_USER_HOME/.claude.json":"${c_home}/.claude.json" \
     -v "$MNT_USER_HOME/.bash_aliases":"${c_home}/.bash_aliases" \

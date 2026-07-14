@@ -85,5 +85,16 @@ npm install -g @ast-grep/cli tree-sitter-cli ripgrep
 
 ```
 
+#### ast-grep-server mcp server安装
+```bash
+# 依赖先安装uv, 通过uv编译安装 ast-grep-server 二进制
+uvx --from git+https://github.com/ast-grep/ast-grep-mcp ast-grep-server
+
+# 找到编译的二进制代码
+find ~/.cache/uv -type f -name "ast-grep-server"
+
+# 通过docker 命令挂载 ast-grep-server到容器
+```
+
 ### openspec
 - version: 1.3.1 or above
