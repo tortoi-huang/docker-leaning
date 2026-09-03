@@ -67,7 +67,9 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
 RUN npm install -g @fission-ai/openspec@1.11.0
 
-RUN curl -fsSL https://opencode.ai/install | bash
+# 容器curl安装成功实际不能用
+# RUN curl -fsSL https://opencode.ai/install | bash
+RUN npm i -g opencode-ai
 
 # ENTRYPOINT 默认 /bin/sh -c
 ENTRYPOINT [ "/bin/bash" ]
