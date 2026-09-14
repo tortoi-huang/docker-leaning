@@ -1,40 +1,12 @@
-# claude java 容器
+# opencode java 容器
 
 ## 容器使用
 ```.env
-# 禁止上传遥测数据, 自动更新, 工具查询. 
-# 需要注意的是关闭后提示词和云端工具不会自动更新. 不能使用官方最新优化的工具和提示词, 也无法使用互联网搜索功能
-CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=true
-# 关闭自动更新, 上述 CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=true 也会关闭自动更新, 包括了下面4条, 但为了保险起见, 这里再加4条
-# 关闭遥测（Telemetry）上传: 使用频率, 功能调用统计, 工具使用情况, 性能指标, 匿名行为数据
-CLAUDE_CODE_DISABLE_TELEMETRY=true
-# 关闭错误报告（Error Reporting）上传
-CLAUDE_CODE_DISABLE_ERROR_REPORTING=true
-# 关闭用户反馈上传: 这个回答不好, 这个工具行为异常, 这个功能建议改进
-CLAUDE_CODE_DISABLE_FEEDBACK=true
-# 关闭自动更新（Auto Updater）: 定期检查更新, 自动下载新版本, 自动应用补丁, 拉取最新工具库版本包括 提示词模板（prompt templates）与工具提示词（tool manifest）的自动更新
-CLAUDE_CODE_DISABLE_AUTOUPDATER=true
-
-# 配置模型
-ANTHROPIC_BASE_URL=https://ark.cn-beijing.volces.com/api/coding
-ANTHROPIC_AUTH_TOKEN=
-ANTHROPIC_MODEL=glm-5.2
-ANTHROPIC_DEFAULT_OPUS_MODEL=glm-5.2
-ANTHROPIC_DEFAULT_SONNET_MODEL=glm-5.2
-ANTHROPIC_DEFAULT_HAIKU_MODEL=glm-5.2
-CLAUDE_CODE_SUBAGENT_MODEL=glm-5.2
-
-docker shell支持中文
+# docker shell支持中文
 LANG=C.UTF-8
+# 设定时区, 避免使用utc
+TZ=Asia/Tokyo
 ```
-
-配置 ~/.claude.json, 不用登录和新手指引
-```json
-{
-  "hasCompletedOnboarding": true
-}
-```
-
 
 ```bash
 #!/bin/bash
@@ -98,3 +70,11 @@ find ~/.cache/uv -type f -name "ast-grep-server"
 
 ### openspec
 - version: 1.3.1 or above
+
+
+## 待改进
+### npm 安装包缓存
+docker file中 npm install 经常更新的软件时, 更新经常打包docker 镜像可以修改为挂载宿主机目录缓存安装包方式:
+1. 容器挂载文件: ${HOME}/.npmrc, 并配置内容: prefix=${HOME}/.local/npm
+2. 配置path: export PATH="$HOME/.local/npm/bin:$PATH"
+3. 挂载目录: ${HOME}/.local

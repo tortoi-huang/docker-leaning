@@ -1,7 +1,7 @@
 # ==========================================
 # 单阶段构建: Ubuntu 26.04 LTS + Bun + Claude Code + Java 25
-# docker buildx build --build-arg=USER_ID=$(id -u) -t claude-java25:0.0.12 .
-# docker run -it --rm --name claude-java25 -v $(pwd):/workspace claude-java25:0.0.12
+# docker buildx build --build-arg=USER_ID=$(id -u) -t claude-java25:0.0.13 .
+# docker run -it --rm --name claude-java25 -v $(pwd):/workspace claude-java25:0.0.13
 # ==========================================
 FROM ubuntu:26.04
 
@@ -65,7 +65,7 @@ USER ${USER_ID}
 RUN npm install -g tree-sitter-cli tree-sitter-java @ast-grep/cli
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
-RUN npm install -g @anthropic-ai/claude-code@2.1.252 @fission-ai/openspec@1.11.0
+RUN npm install -g @anthropic-ai/claude-code@2.1.270 @fission-ai/openspec@1.13.0
 
 # ENTRYPOINT 默认 /bin/sh -c
 ENTRYPOINT [ "/bin/bash" ]

@@ -1,7 +1,7 @@
 # ==========================================
 # 单阶段构建: Ubuntu 26.04 LTS + Bun + opencode + Java 25
-# docker buildx build --build-arg=USER_ID=$(id -u) -t opencode-java25:0.0.1 .
-# docker run -it --rm --name opencode-java25 -v $(pwd):/workspace opencode-java25:0.0.1
+# docker buildx build --build-arg=USER_ID=$(id -u) -t opencode-java25:0.0.2 .
+# docker run -it --rm --name opencode-java25 -v $(pwd):/workspace opencode-java25:0.0.2
 # ==========================================
 FROM ubuntu:26.04
 
@@ -65,7 +65,7 @@ USER ${USER_ID}
 RUN npm install -g tree-sitter-cli tree-sitter-java @ast-grep/cli
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
-RUN npm install -g @fission-ai/openspec@1.11.0
+RUN npm install -g @fission-ai/openspec@1.13.0
 
 # 容器curl安装成功实际不能用
 # RUN curl -fsSL https://opencode.ai/install | bash
